@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8"> 
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="tester-popup theme-dark">
+
+    <div class="header-panel">
+        <div class="row" style="margin-bottom: 6px;">
+            <strong style="font-size: 14px;">Extension On/Off</strong>
+            <label class="switch">
+                <input type="checkbox" id="masterToggle">
+                <span class="slider"></span>
+            </label>
+        </div>
+        
+        <div id="siteToggleRow" class="row" style="margin-bottom: 6px; padding-top: 6px; border-top: 1px solid var(--tester-border);">
+            <div style="text-align: left; font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 170px;">
+                Enable on: <strong id="currentDomain">...</strong>
+            </div>
+            <label class="switch">
+                <input type="checkbox" id="siteToggle">
+                <span class="slider"></span>
+            </label>
+        </div>
+        <div style="font-size: 10px; opacity: 0.7; margin-top: 8px;">Hotkey Toggle: Alt+Shift+Q</div>
+    </div>
+
+    <details style="font-size: 12px; margin-bottom: 15px; border-bottom: 1px solid var(--tester-border); padding-bottom: 10px;">
+        <summary style="cursor: pointer; font-weight: bold; font-size: 14px;">⚙️ Settings & Display</summary>
+        
+        <div style="padding-top: 10px; padding-left: 5px;">
+            <div style="font-size: 10px; text-transform: uppercase; opacity: 0.7; margin-bottom: 6px; font-weight: bold;">Site Default</div>
+            <div class="row" style="margin-bottom: 15px;">
+                <span>Default behavior for new sites:</span>
+                <select id="defaultSiteMode" style="width: 80px; padding: 2px; font-size: 10px;">
+                    <option value="enabled">ON</option>
+                    <option value="disabled">OFF</option>
+                </select>
+            </div>
+
+            <div style="font-size: 10px; text-transform: uppercase; opacity: 0.7; margin-bottom: 6px; font-weight: bold;">Appearance</div>
+            <div class="row">
+                <span>Theme:</span>
+                <select id="themeSelect"><option value="dark">Dark</option><option value="light">Light</option></select>
+            </div>
+            <div class="row" style="margin-bottom: 15px;">
+                <span>Highlight Color:</span>
+                <input type="color" id="outlineColor" value="#ff80ff">
+            </div>
+
+            <div style="font-size: 10px; text-transform: uppercase; opacity: 0.7; margin-bottom: 6px; font-weight: bold;">Performance & UI</div>
+            <div class="row">
+                <span>Hover Delay (ms):</span>
+                <input type="number" id="hoverDelayInput" value="20" min="0" max="500" style="width: 60px; text-align: center;">
+            </div>
+            <div class="row">
+                <span>Dynamic Tracking Arrow:</span>
+                <label class="switch">
+                    <input type="checkbox" id="dynamicArrowToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="row" style="margin-bottom: 15px;">
+                <span title="Forces the tool to read base CSS instead of hover styles">Ignore :hover Styles:</span>
+                <label class="switch">
+                    <input type="checkbox" id="ignoreHoverToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+    </details>
+
+    <h3 style="margin-bottom: 5px;">Accessibility Data</h3>
+    <label style="margin-bottom: 10px; display: flex;"><input type="checkbox" id="a11yToggle"> Enable Accessibility Tracking</label>
+    <div id="a11yPanel" class="sub-panel" style="display:none;">
+        <label><input type="checkbox" class="a11y-check" value="name"> Name / Aria-Label</label>
+        <label><input type="checkbox" class="a11y-check" value="role"> Role</label>
+        <label><input type="checkbox" class="a11y-check" value="focusable"> Keyboard Focusable</label>
+        <label><input type="checkbox" class="a11y-check" value="contrast"> Contrast Ratio</label>
+    </div>
+
+    <h3 style="margin-top: 15px; margin-bottom: 5px;">Automation Tools</h3>
+    <label style="margin-bottom: 10px; display: flex;"><input type="checkbox" id="autoToggle"> Enable Smart Locators</label>
+    <div id="autoPanel" class="sub-panel" style="display:none;">
+        <select id="frameworkSelect" style="width: 100%; margin-bottom: 4px;">
+            <option value="playwright">Playwright</option>
+            <option value="cypress">Cypress</option>
+            <option value="selenium">Selenium</option>
+            <option value="wdio">WebDriverIO</option>
+            <option value="robot">Robot Framework</option>
+        </select>
+        <select id="languageSelect" style="width: 100%; margin-bottom: 4px;">
+            <option value="js">JS / TS</option>
+            <option value="python">Python</option>
+            <option value="java">Java</option>
+        </select>
+        <select id="xpathSelect" style="width: 100%;">
+            <option value="relative">Relative XPath</option>
+            <option value="absolute">Absolute XPath</option>
+        </select>
+    </div>
+
+    <div class="row" style="margin-top: 15px; border-bottom: 1px solid var(--tester-border); padding-bottom: 8px;">
+        <strong style="font-size: 13px; color: var(--tester-success);">Track All Elements</strong>
+        <label class="switch">
+            <input type="checkbox" id="trackAllToggle">
+            <span class="slider"></span>
+        </label>
+    </div>
+
+    <h3 style="display: flex; justify-content: space-between; align-items: baseline; border: none; margin-top: 10px;">
+        Tracked Elements
+        <a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element" target="_blank" style="font-size: 10px; color: var(--tester-class); text-decoration: none;">MDN Ref ↗</a>
+    </h3>
+    <div class="row"><input type="text" id="tagInput" placeholder="Ex. DIV"><button id="addTagBtn">Add</button></div>
+    <ul id="tagList"></ul>
+
+    <h3 style="display: flex; justify-content: space-between; align-items: baseline; border: none;">
+        Tracked Properties
+        <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/Reference" target="_blank" style="font-size: 10px; color: var(--tester-class); text-decoration: none;">MDN Ref ↗</a>
+    </h3>
+    <div class="row"><input type="text" id="cssInput" placeholder="Ex. z-index"><button id="addCssBtn">Add</button></div>
+    <ul id="cssList"></ul>
+
+    <script src="popup.js"></script>
+</body>
+</html>

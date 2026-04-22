@@ -1,0 +1,42 @@
+{
+    "manifest_version": 3,
+    "name": "Quick Element",
+    "version": "1.0.3",
+    "description": "Quickly inspect CSS properties on the fly.",
+    "permissions": [
+        "activeTab",
+        "scripting",
+        "storage"
+    ],
+    "background": {
+        "service_worker": "background.js"
+    },
+    "action": {
+        "default_popup": "popup.html"
+    },
+    "commands": {
+        "toggle-inspector": {
+            "suggested_key": {
+                "default": "Alt+Shift+Q",
+                "mac": "Command+Shift+Q"
+            },
+            "description": "Toggle the Inspector"
+        }
+    },
+    "icons": {
+        "128": "QuickElement-Eyelid128.png"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "<all_urls>"
+            ],
+            "js": [
+                "content.js"
+            ],
+            "css": [
+                "styles.css"
+            ]
+        }
+    ]
+}

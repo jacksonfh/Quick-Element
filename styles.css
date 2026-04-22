@@ -1,0 +1,392 @@
+/* --- CSS VARIABLES --- */
+:root,
+.theme-dark {
+    --tester-bg-alpha: rgba(47, 53, 66, 0.95);
+    --tester-bg-solid: #2f3542;
+    --tester-text: #f1f2f6;
+    --tester-border: #57606f;
+    --tester-val: #00d2d3;
+    --tester-a11y: #ff9f43;
+    --tester-tag: #ff9f43;
+    --tester-class: #54a0ff;
+    --tester-btn-bg: #1e90ff;
+    --tester-btn-hover: #3742fa;
+    --tester-danger: #ff4757;
+    --tester-danger-hover: #ff6b81;
+    --tester-success: #2ed573;
+    --tester-success-hover: #26b360;
+    --tester-list-bg: #57606f;
+    --tester-input-bg: #1e242e;
+}
+
+.theme-light {
+    --tester-bg-alpha: rgba(241, 242, 246, 0.95);
+    --tester-bg-solid: #f1f2f6;
+    --tester-text: #2f3542;
+    --tester-border: #ced6e0;
+    --tester-val: #0984e3;
+    --tester-a11y: #d35400;
+    --tester-tag: #833471;
+    --tester-class: #0984e3;
+    --tester-btn-bg: #1e90ff;
+    --tester-btn-hover: #3742fa;
+    --tester-danger: #ff4757;
+    --tester-danger-hover: #ff6b81;
+    --tester-success: #2ed573;
+    --tester-success-hover: #26b360;
+    --tester-list-bg: #dfe4ea;
+    --tester-input-bg: #ffffff;
+}
+
+.tester-highlight-active {
+    outline: 2px solid var(--tester-user-outline, #ff80ff) !important;
+}
+
+/* --- TOOLTIP STYLES --- */
+#tester-tooltip {
+    position: fixed;
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    z-index: 2147483647;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    min-width: 220px;
+    max-width: 380px;
+    backdrop-filter: blur(5px);
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+    background: var(--tester-bg-alpha);
+    color: var(--tester-text);
+    border: 1px solid var(--tester-border);
+    pointer-events: none;
+}
+
+#tester-tooltip.locked-mode {
+    pointer-events: auto;
+    user-select: text;
+}
+
+#tester-tooltip hr {
+    border-color: var(--tester-border);
+    margin: 6px 0;
+    border-style: solid;
+    border-width: 1px 0 0 0;
+}
+
+#tester-tooltip .val {
+    color: var(--tester-val);
+}
+
+#tester-tooltip .a11y-val {
+    color: var(--tester-a11y);
+    font-weight: bold;
+}
+
+#tester-tooltip .dev-tag {
+    color: var(--tester-tag);
+    font-weight: bold;
+}
+
+#tester-tooltip .dev-class {
+    color: var(--tester-class);
+}
+
+#tester-tooltip .section-title {
+    font-size: 10px;
+    opacity: 0.7;
+    text-transform: uppercase;
+    margin-top: 6px;
+    margin-bottom: 2px;
+    font-weight: bold;
+}
+
+#tester-tooltip button {
+    display: block;
+    width: 100%;
+    margin-top: 8px;
+    cursor: pointer;
+    background: var(--tester-btn-bg);
+    color: white;
+    border: none;
+    padding: 6px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 11px;
+}
+
+#tester-tooltip button:hover {
+    background: var(--tester-btn-hover);
+}
+
+#tester-tooltip button.btn-success {
+    background: var(--tester-success);
+    margin-top: 0;
+}
+
+#tester-tooltip button.btn-success:hover {
+    background: var(--tester-success-hover);
+}
+
+#tester-tooltip .close-icon-btn {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    margin: 0;
+    background: var(--tester-danger);
+    border-radius: 50%;
+    font-size: 10px;
+    line-height: 20px;
+    text-align: center;
+}
+
+#tester-tooltip .close-icon-btn:hover {
+    background: var(--tester-danger-hover);
+}
+
+.action-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.locator-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 8px;
+}
+
+.locator-list button {
+    margin: 0;
+    font-family: monospace;
+    font-size: 10px;
+    text-align: left;
+    padding: 6px;
+    background: var(--tester-list-bg);
+    border: 1px solid var(--tester-border);
+    color: var(--tester-text);
+}
+
+.locator-list button:hover {
+    background: var(--tester-btn-bg);
+}
+
+#tester-tooltip::after {
+    content: '';
+    position: absolute;
+    left: var(--arrow-x, 50%);
+    margin-left: -6px;
+    border-width: 6px;
+    border-style: solid;
+    transition: left 0.05s ease-out;
+}
+
+#tester-tooltip.arrow-down::after {
+    top: 100%;
+    bottom: auto;
+    border-color: var(--tester-bg-alpha) transparent transparent transparent;
+}
+
+#tester-tooltip.arrow-up::after {
+    bottom: 100%;
+    top: auto;
+    border-color: transparent transparent var(--tester-bg-alpha) transparent;
+}
+
+/* --- POPUP SPECIFIC STYLES --- */
+body.tester-popup {
+    width: 260px;
+    font-family: sans-serif;
+    padding: 12px;
+    background: var(--tester-bg-solid);
+    color: var(--tester-text);
+    transition: background 0.2s, color 0.2s;
+    margin: 0;
+}
+
+.tester-popup h3 {
+    margin-top: 15px;
+    font-size: 14px;
+    border-bottom: 1px solid var(--tester-border);
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+}
+
+.tester-popup .row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    align-items: center;
+}
+
+.tester-popup input[type="text"] {
+    width: 65%;
+    padding: 4px;
+    border-radius: 3px;
+    border: 1px solid var(--tester-border);
+    background: var(--tester-input-bg);
+    color: var(--tester-text);
+}
+
+.tester-popup select,
+.tester-popup input[type="color"] {
+    padding: 2px;
+    border-radius: 3px;
+    border: 1px solid var(--tester-border);
+    background: var(--tester-input-bg);
+    color: var(--tester-text);
+    cursor: pointer;
+}
+
+.tester-popup button {
+    background: var(--tester-btn-bg);
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.tester-popup button:hover {
+    background: var(--tester-btn-hover);
+}
+
+.tester-popup .remove-btn {
+    background: var(--tester-danger);
+    padding: 2px 6px;
+    font-size: 10px;
+    margin-left: 5px;
+    cursor: pointer;
+}
+
+.tester-popup ul {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 15px 0;
+    font-size: 12px;
+}
+
+.tester-popup li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--tester-list-bg);
+    margin-bottom: 4px;
+    padding: 4px;
+    border-radius: 3px;
+}
+
+.tester-popup label {
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+}
+
+.tester-popup .sub-panel {
+    margin-left: 10px;
+    padding-left: 10px;
+    border-left: 2px solid var(--tester-border);
+    margin-bottom: 10px;
+}
+
+.tester-popup .drag-handle {
+    cursor: grab;
+    padding-right: 8px;
+    opacity: 0.6;
+    font-size: 14px;
+}
+
+.tester-popup .drag-handle:active {
+    cursor: grabbing;
+}
+
+.tester-popup li.dragging {
+    opacity: 0.4;
+    border: 1px dashed var(--tester-btn-bg);
+}
+
+/* --- NEW UI TOGGLE SWITCHES --- */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 34px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--tester-border);
+    transition: .2s;
+    border-radius: 20px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 14px;
+    width: 14px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .2s;
+    border-radius: 50%;
+}
+
+input:checked+.slider {
+    background-color: var(--tester-success);
+}
+
+input:checked+.slider:before {
+    transform: translateX(14px);
+}
+
+.header-panel {
+    background: var(--tester-list-bg);
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.header-panel {
+    background: var(--tester-list-bg);
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+/* Dims the site row when master is off */
+.dimmed {
+    opacity: 0.4;
+    transition: opacity 0.2s ease-in-out;
+}
+
+/* Color Swatch for CSS Properties */
+.color-swatch {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border: 1px solid var(--tester-border);
+    border-radius: 2px;
+    margin-right: 4px;
+    vertical-align: middle;
+}
