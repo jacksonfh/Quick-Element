@@ -263,6 +263,11 @@ body.tester-popup {
     cursor: pointer;
 }
 
+/*Not having this caused the 'x' button issue in popup */
+.tester-popup .remove-btn:hover {
+    background: var(--tester-danger-hover);
+}
+
 .tester-popup ul {
     list-style: none;
     padding: 0;
@@ -311,7 +316,8 @@ body.tester-popup {
     border: 1px dashed var(--tester-btn-bg);
 }
 
-/* --- NEW UI TOGGLE SWITCHES --- */
+/* MARK: UI TOGGLES 
+*/
 .switch {
     position: relative;
     display: inline-block;
