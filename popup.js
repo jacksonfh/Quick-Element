@@ -94,7 +94,6 @@ document.addEventListener('DOMContentLoaded', () => {
         customSitesList = [];
         chrome.storage.local.set({ defaultSiteMode: currentMode, customSites: customSitesList });
         if (currentMode === 'enabled') siteToggle.checked = true;
-        else siteToggle.checked = false;
     });
 
     siteToggle.addEventListener('change', (e) => {
