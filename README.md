@@ -29,3 +29,5 @@ The Quick Element icon should now appear in your Chrome toolbar!
 * `L` (or `Shift + Click`): Lock the tooltip onto the current element to interact with the menu.
 * `F`: Toggle the tooltip to dynamically follow your mouse or tether to the element.
 * `P`: Flip the tooltip position above or below the element.
+
+icon credit to: hanna gelwix (https://github.com/hangelwix)
