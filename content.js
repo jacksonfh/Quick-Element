@@ -92,7 +92,6 @@ chrome.runtime.onMessage.addListener((request) => {
 document.addEventListener('keydown', (e) => {
     if (!inspectorActive || !currentTarget) return;
 
-    // FIX: Ignore all hotkeys if the user is actively typing in an input field!
     if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable)) {
         return;
     }
@@ -105,8 +104,8 @@ document.addEventListener('keydown', (e) => {
         return;
     }
 
-    if (key === 'f') { tetherToElement = !tetherToElement; updateTooltipPosition(currentTarget); } // Changed to 'f'
-    if (key === 'p') { positionAbove = !positionAbove; updateTooltipPosition(currentTarget); }
+    if (key === 'f') { tetherToElement = !tetherToElement; updateTooltipPosition(currentTarget); } // 'f' to tether
+    if (key === 'p') { positionAbove = !positionAbove; updateTooltipPosition(currentTarget); } // 'p' flip position of block
 });
 
 const tooltip = document.createElement('div');
