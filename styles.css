@@ -17,6 +17,7 @@
     --tester-success-hover: #26b360;
     --tester-list-bg: #57606f;
     --tester-input-bg: #1e242e;
+    --tester-locator: #9b59b6;
 }
 
 .theme-light {
@@ -152,7 +153,13 @@
     margin-top: 8px;
 }
 
-.locator-list {
+.action-row {
+    margin-top: 8px;
+    gap: 6px;
+    background: var(--tester-success);
+}
+
+action .locator-list {
     display: flex;
     flex-direction: column;
     gap: 4px;

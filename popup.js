@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const showHighlightToggle = document.getElementById('showHighlightToggle'); 
     const showTooltipToggle = document.getElementById('showTooltipToggle'); 
-    const showHotkeyToggle = document.getElementById('showHotkeyToggle'); // NEW
+    const showHotkeyToggle = document.getElementById('showHotkeyToggle'); 
     const trackAllToggle = document.getElementById('trackAllToggle');
     const hoverDelayInput = document.getElementById('hoverDelayInput');
     const dynamicArrowToggle = document.getElementById('dynamicArrowToggle');
@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
         'customCSS', 'trackedTags', 'masterActive', 'customSites', 'disabledDomains', 'defaultSiteMode', 'theme', 'outlineColor', 
         'enableA11y', 'trackedA11y', 'enableAuto', 'framework', 'language', 'xpathMode',
         'trackAllElements', 'hoverDelay', 'dynamicArrow', 'ignoreHoverStyles',
-        'showHighlight', 'showTooltip', 'showHotkeys' // NEW
+        'showHighlight', 'showTooltip', 'showHotkeys' 
     ], (result) => {
         renderList(result.customCSS || ['max-length', 'color', 'font-size', 'padding'], cssList, 'customCSS');
         renderList(result.trackedTags || ['INPUT', 'TEXTAREA'], tagList, 'trackedTags');
@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         showHighlightToggle.checked = result.showHighlight !== false; 
         showTooltipToggle.checked = result.showTooltip !== false; 
-        showHotkeyToggle.checked = result.showHotkeys !== false; // NEW
+        showHotkeyToggle.checked = result.showHotkeys !== false; 
         trackAllToggle.checked = result.trackAllElements || false;
         hoverDelayInput.value = result.hoverDelay !== undefined ? result.hoverDelay : 20;
         dynamicArrowToggle.checked = result.dynamicArrow !== false;
@@ -119,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     showHighlightToggle.addEventListener('change', (e) => chrome.storage.local.set({ showHighlight: e.target.checked }));
     showTooltipToggle.addEventListener('change', (e) => chrome.storage.local.set({ showTooltip: e.target.checked }));
-    showHotkeyToggle.addEventListener('change', (e) => chrome.storage.local.set({ showHotkeys: e.target.checked })); // NEW
+    showHotkeyToggle.addEventListener('change', (e) => chrome.storage.local.set({ showHotkeys: e.target.checked }));
     trackAllToggle.addEventListener('change', (e) => chrome.storage.local.set({ trackAllElements: e.target.checked }));
     hoverDelayInput.addEventListener('change', (e) => chrome.storage.local.set({ hoverDelay: parseInt(e.target.value) || 0 }));
     dynamicArrowToggle.addEventListener('change', (e) => chrome.storage.local.set({ dynamicArrow: e.target.checked }));
@@ -241,4 +241,15 @@ document.addEventListener('DOMContentLoaded', () => {
             chrome.storage.local.set({ [storageKey]: newItems });
         });
     }
+
+    // Map Hotkeys directly to the UI Switches while Popup is open
+    document.addEventListener('keydown', (e) => {
+        const key = e.key.toLowerCase();
+        if (e.altKey) {
+            if (key === 'o') { e.preventDefault(); showHighlightToggle.click(); }
+            if (key === 'i') { e.preventDefault(); showTooltipToggle.click(); }
+            if (key === 's') { e.preventDefault(); ignoreHoverToggle.click(); }
+            if (key === 'h') { e.preventDefault(); showHotkeyToggle.click(); }
+        }
+    });
 });

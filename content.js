@@ -32,7 +32,6 @@ shield.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh
 document.body.appendChild(shield);
 
 function updateShieldState() {
-    // Strictly toggled by Alt+S now. No weird click-through logic.
     if (inspectorActive && ignoreHoverStyles && !isLocked) {
         shield.style.display = 'block';
     } else {
@@ -84,6 +83,8 @@ function loadConfig() {
         
         if (inspectorActive && currentTarget && tooltip.style.display === 'block') {
             updateTooltipPosition(currentTarget);
+            // Force text redraw if toggles were hit from popup
+            if (!isLocked) tooltip.innerHTML = renderHoverUI(currentTarget);
         }
         
         if (!inspectorActive) cleanUp();
@@ -108,7 +109,7 @@ document.addEventListener('keydown', (e) => {
     // --- Strict Toggles (Bypass Input Focus) ---
     if (e.altKey && key === 's') {
         e.preventDefault();
-        ignoreHoverStyles = !ignoreHoverStyles; // Strict binary toggle
+        ignoreHoverStyles = !ignoreHoverStyles; 
         chrome.storage.local.set({ ignoreHoverStyles: ignoreHoverStyles });
         updateShieldState();
         
@@ -144,8 +145,18 @@ document.addEventListener('keydown', (e) => {
         return;
     }
 
-    // --- DOM Traversal (Layer Up / Layer Down) ---
-    if (e.altKey && e.shiftKey && key === '+') { // Up (Parent)
+    if (e.altKey && key === 'h') { 
+        e.preventDefault();
+        showHotkeys = !showHotkeys;
+        chrome.storage.local.set({ showHotkeys: showHotkeys });
+        if (showTooltip && currentTarget && !isLocked) {
+            tooltip.innerHTML = renderHoverUI(currentTarget); // Force immediate UI refresh
+        }
+        return;
+    }
+
+    // DOM Traversal (Layer Up / Layer Down)
+    if (e.altKey && key === 'x') { // Up (Parent)
         e.preventDefault();
         if (currentTarget && currentTarget.parentElement && currentTarget.parentElement.tagName !== 'HTML') {
             currentTarget.classList.remove('tester-highlight-active');
@@ -160,7 +171,7 @@ document.addEventListener('keydown', (e) => {
         return;
     }
 
-    if (e.altKey && key === '1') { // Down (First Child)
+    if (e.altKey && key === 'z') { // Down (First Child)
         e.preventDefault();
         if (currentTarget && currentTarget.firstElementChild) {
             currentTarget.classList.remove('tester-highlight-active');
@@ -184,10 +195,8 @@ document.addEventListener('keydown', (e) => {
         return;
     }
 
-    if (e.altkey && key === 'h') { showHotkeys = !showHotkeys; return;}
     if (e.altKey && key === 't') { tetherToElement = !tetherToElement; updateTooltipPosition(currentTarget); return;}
     if (e.altKey && key === 'p') { positionAbove = !positionAbove; updateTooltipPosition(currentTarget); return;}
-    
 });
 
 const tooltip = document.createElement('div');
@@ -287,6 +296,7 @@ function renderHoverUI(target) {
         <div style="font-size: 10px; opacity: 0.8; text-align: center; margin-top: 4px;">
             All hotkeys led by Alt key
         </div>
+        <hr>
         <div style="font-size: 10px; opacity: 0.8; text-align: center; margin-top: 4px;">
             [O]utlines | [I]nfo | [S]hield | [H]otkeys
         </div>
@@ -294,7 +304,7 @@ function renderHoverUI(target) {
             Alt+[L] or Shift+Click to Lock
         </div>
         <div style="font-size: 10px; opacity: 0.8; text-align: center; margin-top: 4px;">
-            Shift+[-/+]Layers | [T]ether | [P]osition
+            [Z/X]Layers | [T]ether | [P]osition
         </div>
     ` : `
     `;
@@ -317,7 +327,6 @@ let hoverTimer;
 document.addEventListener('mousemove', (e) => {
     if (!inspectorActive || isLocked) return; 
 
-    // Anti-Jitter: Ignore movements less than 3 pixels so DOM Traversal (Alt+U/D) doesn't instantly snap back
     if (Math.abs(e.clientX - lastMouse.x) < 3 && Math.abs(e.clientY - lastMouse.y) < 3) {
         return; 
     }
@@ -425,13 +434,11 @@ document.addEventListener('click', (e) => {
     if (!inspectorActive) return;
 
     let target = e.target;
-    let fromShield = false;
 
     if (target === shield) {
         shield.style.display = 'none';
         target = document.elementFromPoint(e.clientX, e.clientY);
-        fromShield = true;
-        // Shield stays off here so the native click can process correctly
+        // Do not update fromShield here so click behavior is handled naturally
     }
 
     if (isLocked) {
@@ -445,10 +452,6 @@ document.addEventListener('click', (e) => {
         e.stopPropagation();
         e.stopImmediatePropagation();
         lockElement(target);
-    } else if (fromShield && target) {
-        // Re-raise shield immediately after letting the native click pass through
-        target.click();
-        if (ignoreHoverStyles) shield.style.display = 'block';
     }
 }, true); 
 
@@ -468,9 +471,14 @@ function lockElement(targetElement) {
 
 function renderLockedMenu(returnHtmlString = false) {
     const isInput = currentTarget.tagName === 'INPUT' || currentTarget.tagName === 'TEXTAREA';
-    let autoHTML = enableAuto ? `<button id="showLocatorsBtn" class="btn-success" style="background: #9b59b6;">Locators</button>` : '';
-    let fillBtnHTML = isInput ? `<button id="fillMax">Fill Max + Overflow</button>` : '';
-    
+    let autoHTML = enableAuto ? `
+    <div class="action-grid">
+        <button id="copyElPropsBtn" class="btn-success" var(--tester-success)">HTML+CSS</button>
+        <button id="showLocatorsBtn" class="btn-success" var(--tester-locator)">Locators</button>
+    </div>`:
+    `<button id="copyElPropsBtn" class="action-row">HTML+CSS</button>`;
+    let fillBtnHTML = isInput ? `<button id="fillMax" class"action-row">Fill Max + Overflow</button>` : '';
+
     let html = `
         <button id="closeMenuBtn" class="close-icon-btn">X</button>
         <div style="font-family: monospace; font-size: 13px; margin-bottom: 8px; padding-right: 15px; word-break: break-all;">
@@ -486,9 +494,8 @@ function renderLockedMenu(returnHtmlString = false) {
         <div class="action-grid">
             <button id="copyCssBtn" class="btn-success">Copy CSS</button>
             <button id="copyAllCssBtn" class="btn-success">All CSS</button>
-            <button id="copyElPropsBtn" class="btn-success">HTML+CSS</button>
-            ${autoHTML}
         </div>
+        ${autoHTML}
         ${fillBtnHTML}
     `;
 
@@ -523,7 +530,7 @@ function renderLocatorMenu() {
     tooltip.innerHTML = `
         <button id="closeMenuBtn" class="close-icon-btn">X</button>
         <div style="font-family: monospace; font-size: 13px; margin-bottom: 8px; padding-right: 15px;">${generateElementHeader(currentTarget)}</div>
-        <div style="font-size: 11px; margin-bottom: 4px; color: #f1c40f;">${testFramework.toUpperCase()} Locators:</div>
+        <div style="font-size: 11px; margin-bottom: 4px; color: var(--tester-locator)">${testFramework.toUpperCase()} Locators:</div>
         <div class="locator-list">
             ${listHTML}
             <button id="backToActionsBtn" style="background: var(--tester-list-bg); text-align: center;">← Back</button>
