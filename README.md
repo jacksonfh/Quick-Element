@@ -1,3 +1,5 @@
+Chrome Store Download: https://chromewebstore.google.com/detail/quick-element/kodnlnipihmbbhoahhpaainafljdhkkf
+
 # Quick Element - Chrome Extension
 
 Quick Element is a lightweight, zero-friction Chrome extension designed for QA Automation Engineers, Manual Testers, and Front-End Developers. It allows you to instantly inspect CSS properties, accessibility data, and generate smart automation locators without ever opening Chrome DevTools.
