@@ -252,4 +252,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (key === 'h') { e.preventDefault(); showHotkeyToggle.click(); }
         }
     });
+    function getSoftwareVersion(){
+        const manifestData = chrome.runtime.getManifest();
+        const version = manifestData.version;
+        return(`v.${version}`);
+    }
+    document.getElementById("version_number").innerHTML = getSoftwareVersion();
 });
