@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Quick Element",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "description": "Quickly inspect CSS properties on the fly.",
     "permissions": [
         "activeTab",

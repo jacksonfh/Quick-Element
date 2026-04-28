@@ -24,7 +24,7 @@
                 <span class="slider"></span>
             </label>
         </div>
-        <div style="font-size: 10px; opacity: 0.7; margin-top: 8px;">Hotkey Toggle: Alt+Shift+Q</div>
+        <div class="small-line">Extension Toggle: Alt+Shift+Q</div>
     </div>
 
     <details style="font-size: 12px; margin-bottom: 15px; border-bottom: 1px solid var(--tester-border); padding-bottom: 10px;">
@@ -34,9 +34,8 @@
             <div style="font-size: 10px; text-transform: uppercase; opacity: 0.7; margin-bottom: 6px; font-weight: bold;">Site Default</div>
             <div class="row" style="margin-bottom: 15px;">
                 <span>Default behavior for new sites:</span>
-                <select id="defaultSiteMode" style="width: 80px; padding: 2px; font-size: 10px;">
-                    <option value="enabled">ON</option>
-                    <option value="disabled">OFF</option>
+                <select id="defaultSiteMode" class="drop">
+                    <option value="enabled">ON</option><option value="disabled">OFF</option>
                 </select>
             </div>
 
@@ -45,30 +44,54 @@
                 <span>Theme:</span>
                 <select id="themeSelect"><option value="dark">Dark</option><option value="light">Light</option></select>
             </div>
-            <div class="row" style="margin-bottom: 15px;">
+            <div class="row">
                 <span>Highlight Color:</span>
                 <input type="color" id="outlineColor" value="#ff80ff">
             </div>
-
-            <div style="font-size: 10px; text-transform: uppercase; opacity: 0.7; margin-bottom: 6px; font-weight: bold;">Performance & UI</div>
+            <div class="row">
+                <span>Show Element Outline:</span>
+                <label class="switch">
+                    <input type="checkbox" id="showHighlightToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="small-line">alt+[o]</div>
+            <div class="row">
+                <span>Show Info Box:</span>
+                <label class="switch">
+                    <input type="checkbox" id="showTooltipToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="small-line">alt+[i]</div>
+            <div class="row">
+                <span>Show Hotkey in Tooltips:</span>
+                <label class="switch">
+                    <input type="checkbox" id="showHotkeyToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="small-line">alt+[h]</div>
+            <div class="subhead-Row">Performance & UI</div>
             <div class="row">
                 <span>Hover Delay (ms):</span>
                 <input type="number" id="hoverDelayInput" value="20" min="0" max="500" style="width: 60px; text-align: center;">
             </div>
             <div class="row">
-                <span>Dynamic Tracking Arrow:</span>
+                <span title = "Lets the arrow move with the mouse (can be more cpu intensive)">Dynamic Tracking Arrow:</span>
                 <label class="switch">
                     <input type="checkbox" id="dynamicArrowToggle">
                     <span class="slider"></span>
                 </label>
             </div>
-            <div class="row" style="margin-bottom: 15px;">
-                <span title="Forces the tool to read base CSS instead of hover styles">Ignore :hover Styles:</span>
+            <div class="row">
+                <span title="Forces the tool to read base CSS instead of hover styles">Ignore Hover Styles:</span>
                 <label class="switch">
                     <input type="checkbox" id="ignoreHoverToggle">
                     <span class="slider"></span>
                 </label>
             </div>
+            <span class="small-line">alt+[s]</span>
         </div>
     </details>
 
@@ -114,16 +137,16 @@
         Tracked Elements
         <a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element" target="_blank" style="font-size: 10px; color: var(--tester-class); text-decoration: none;">MDN Ref ↗</a>
     </h3>
-    <div class="row"><input type="text" id="tagInput" placeholder="Ex. DIV"><button id="addTagBtn">Add</button></div>
+    <div class="row"><input type="text" id="tagInput" placeholder="INPUT"><button id="addTagBtn">Add</button></div>
     <ul id="tagList"></ul>
 
     <h3 style="display: flex; justify-content: space-between; align-items: baseline; border: none;">
         Tracked Properties
         <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/Reference" target="_blank" style="font-size: 10px; color: var(--tester-class); text-decoration: none;">MDN Ref ↗</a>
     </h3>
-    <div class="row"><input type="text" id="cssInput" placeholder="Ex. z-index"><button id="addCssBtn">Add</button></div>
+    <div class="row"><input type="text" id="cssInput" placeholder="z-index"><button id="addCssBtn">Add</button></div>
     <ul id="cssList"></ul>
-
+    <div id="version_number" class="small-line" style="text-align: center;"></div>
     <script src="popup.js"></script>
 </body>
 </html>

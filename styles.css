@@ -17,6 +17,7 @@
     --tester-success-hover: #26b360;
     --tester-list-bg: #57606f;
     --tester-input-bg: #1e242e;
+    --tester-locator: #9b59b6;
 }
 
 .theme-light {
@@ -40,6 +41,22 @@
 
 .tester-highlight-active {
     outline: 2px solid var(--tester-user-outline, #ff80ff) !important;
+}
+
+.small-line {
+    font-size: 10px;
+    opacity: 0.7;
+    vertical-align: center;
+    align-items: top;
+}
+
+.subhead-Row {
+    font-size: 10px;
+    text-transform: uppercase;
+    opacity: 0.7;
+    margin-top: 10px;
+    margin-bottom: 6px;
+    font-weight: bold;
 }
 
 /* --- TOOLTIP STYLES --- */
@@ -152,7 +169,13 @@
     margin-top: 8px;
 }
 
-.locator-list {
+.action-row {
+    margin-top: 8px;
+    gap: 6px;
+    background: var(--tester-success);
+}
+
+action .locator-list {
     display: flex;
     flex-direction: column;
     gap: 4px;
@@ -218,6 +241,13 @@ body.tester-popup {
 .tester-popup .row {
     display: flex;
     justify-content: space-between;
+    margin-top: 10px;
+    align-items: center;
+}
+
+.drop {
+    display: flex;
+    justify-content: space-between;
     margin-bottom: 10px;
     align-items: center;
 }
@@ -263,7 +293,6 @@ body.tester-popup {
     cursor: pointer;
 }
 
-/*Not having this caused the 'x' button issue in popup */
 .tester-popup .remove-btn:hover {
     background: var(--tester-danger-hover);
 }
@@ -316,8 +345,8 @@ body.tester-popup {
     border: 1px dashed var(--tester-btn-bg);
 }
 
-/* MARK: UI TOGGLES 
-*/
+
+/* MARK: UI TOGGLES */
 .switch {
     position: relative;
     display: inline-block;
@@ -362,14 +391,6 @@ input:checked+.slider {
 
 input:checked+.slider:before {
     transform: translateX(14px);
-}
-
-.header-panel {
-    background: var(--tester-list-bg);
-    padding: 10px;
-    border-radius: 6px;
-    margin-bottom: 10px;
-    text-align: center;
 }
 
 .header-panel {
