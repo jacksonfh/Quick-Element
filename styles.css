@@ -59,6 +59,45 @@
     font-weight: bold;
 }
 
+.definition {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+}
+
+/* Definition text */
+.definitiontext {
+    visibility: hidden;
+    /* Hidden by default */
+    background-color: darkslategray;
+    color: #ffffff;
+    text-align: center;
+    padding: 5px 5px 5px 5px;
+    border-radius: 6px;
+    position: absolute;
+    top: -5px;
+    right: 105%;
+    width: max-content;
+    font-size: 10px;
+}
+
+/* Show the definition text on hover */
+.definition:hover .definitiontext {
+    visibility: visible;
+}
+
+.definitiontext::after {
+    content: " ";
+    position: absolute;
+    top: 50%;
+    left: 100%;
+    /* To the right of the definition */
+    margin-top: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent transparent transparent darkslategray;
+}
+
 /* --- TOOLTIP STYLES --- */
 #tester-tooltip {
     position: fixed;
