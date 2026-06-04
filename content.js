@@ -1,5 +1,6 @@
 let inspectorActive = false; 
 let isLocked = false;
+let lockedMenuType = 'main'; 
 let currentTarget = null; 
 
 let tetherToElement = true; 
@@ -21,15 +22,27 @@ let dynamicArrow = true;
 let ignoreHoverStyles = false; 
 
 let showHighlight = true;
+let showOutline = true;
 let showTooltip = true;
 let showHotkeys = true; 
 
 let lastRefreshTime = 0; 
 
+// NEW: The Map that tracks which SVG belongs to which DOM Element
+let pictureArrows = new Map();
+
 const shield = document.createElement('div');
 shield.id = 'tester-glass-shield';
 shield.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:2147483645; opacity:0; cursor:crosshair;';
 document.body.appendChild(shield);
+
+function isExtensionValid() {
+    try {
+        return !!chrome.runtime?.id;
+    } catch (e) {
+        return false;
+    }
+}
 
 function updateShieldState() {
     if (inspectorActive && ignoreHoverStyles && !isLocked) {
@@ -40,11 +53,12 @@ function updateShieldState() {
 }
 
 function loadConfig() {
+    if (!isExtensionValid()) return;
     chrome.storage.local.get([
         'customCSS', 'trackedTags', 'masterActive', 'customSites', 'disabledDomains', 'defaultSiteMode', 'theme', 'outlineColor',
         'enableA11y', 'trackedA11y', 'enableAuto', 'framework', 'language', 'xpathMode',
         'trackAllElements', 'hoverDelay', 'dynamicArrow', 'ignoreHoverStyles',
-        'showHighlight', 'showTooltip', 'showHotkeys' 
+        'showOutline', 'showTooltip', 'showHotkeys', 'showHighlight', 'highlightColor'
     ], (result) => {
         trackedCSS = result.customCSS || ['max-length', 'color', 'font-size', 'padding'];
         trackedTags = result.trackedTags || ['INPUT', 'TEXTAREA'];
@@ -60,12 +74,15 @@ function loadConfig() {
         hoverDelay = result.hoverDelay !== undefined ? result.hoverDelay : 20; 
         dynamicArrow = result.dynamicArrow !== false;
         ignoreHoverStyles = result.ignoreHoverStyles || false; 
+        showOutline = result.showOutline !== false;
         showHighlight = result.showHighlight !== false;
         showTooltip = result.showTooltip !== false;
         showHotkeys = result.showHotkeys !== false;
 
         tooltip.className = `theme-${result.theme || 'dark'}`; 
+        
         document.documentElement.style.setProperty('--tester-user-outline', result.outlineColor || '#ff80ff');
+        document.documentElement.style.setProperty('--tester-user-highlight', result.highlightColor || '#ffee0093'); 
 
         const isMasterOn = result.masterActive !== false;
         const defaultMode = result.defaultSiteMode || 'enabled';
@@ -83,7 +100,6 @@ function loadConfig() {
         
         if (inspectorActive && currentTarget && tooltip.style.display === 'block') {
             updateTooltipPosition(currentTarget);
-            // Force text redraw if toggles were hit from popup
             if (!isLocked) tooltip.innerHTML = renderHoverUI(currentTarget);
         }
         
@@ -91,22 +107,52 @@ function loadConfig() {
     });
 }
 
-chrome.storage.onChanged.addListener(() => loadConfig());
+if (isExtensionValid()) {
+    chrome.storage.onChanged.addListener(() => loadConfig());
+}
 
-chrome.runtime.onMessage.addListener((request) => {
-    if (request.command === "toggle_inspector") {
-        chrome.storage.local.get(['masterActive'], (res) => {
-            chrome.storage.local.set({ masterActive: !(res.masterActive !== false) });
-        });
-    }
-});
+// NEW: The engine that keeps the SVG arrows glued to their target elements
+function updateAllArrows() {
+    pictureArrows.forEach((arrow, el) => {
+        // If the element was deleted from the page, clean up the arrow to prevent memory leaks
+        if (!document.body.contains(el)) {
+            arrow.remove();
+            pictureArrows.delete(el);
+            return;
+        }
+
+        const rect = el.getBoundingClientRect();
+        let topPos = rect.top - 42;
+        let leftPos = rect.left - 42;
+        let scaleX = 1;
+        let scaleY = 1;
+
+        // Dynamic edge-collision detection. Flips the arrow if too close to the screen boundaries!
+        if (topPos < 0) {
+            topPos = rect.bottom + 2;
+            scaleY = -1; 
+        }
+        if (leftPos < 0) {
+            leftPos = rect.right + 2;
+            scaleX = -1;
+        }
+        
+        arrow.style.transform = `translate(${leftPos}px, ${topPos}px) scale(${scaleX}, ${scaleY})`;
+    });
+}
+
+// Listen to scrolls dynamically across the whole page to glue the arrows down
+window.addEventListener('scroll', updateAllArrows, true);
+window.addEventListener('resize', updateAllArrows);
 
 document.addEventListener('keydown', (e) => {
-    if (!inspectorActive || !currentTarget) return;
+    if (!isExtensionValid() || !inspectorActive || !currentTarget) return;
     const key = e.key.toLowerCase();
     const isInput = e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable);
+    
+    let target = e.target;
+    let fromShield = false;
 
-    // --- Strict Toggles (Bypass Input Focus) ---
     if (e.altKey && key === 's') {
         e.preventDefault();
         ignoreHoverStyles = !ignoreHoverStyles; 
@@ -122,11 +168,22 @@ document.addEventListener('keydown', (e) => {
 
     if (e.altKey && key === 'o') {
         e.preventDefault();
+        showOutline = !showOutline;
+        chrome.storage.local.set({ showOutline: showOutline });
+        if (currentTarget) {
+            if (showOutline) currentTarget.classList.add('tester-outline-hover');
+            else currentTarget.classList.remove('tester-outline-hover');
+        }
+        return;
+    }
+
+    if (e.altKey && key === 'h') {
+        e.preventDefault();
         showHighlight = !showHighlight;
         chrome.storage.local.set({ showHighlight: showHighlight });
         if (currentTarget) {
-            if (showHighlight) currentTarget.classList.add('tester-highlight-active');
-            else currentTarget.classList.remove('tester-highlight-active');
+            if (showHighlight) currentTarget.classList.add('tester-highlight-hover');
+            else currentTarget.classList.remove('tester-highlight-hover');
         }
         return;
     }
@@ -145,23 +202,35 @@ document.addEventListener('keydown', (e) => {
         return;
     }
 
-    if (e.altKey && key === 'h') { 
+    if (e.altKey && key === 'k') { 
         e.preventDefault();
         showHotkeys = !showHotkeys;
         chrome.storage.local.set({ showHotkeys: showHotkeys });
         if (showTooltip && currentTarget && !isLocked) {
-            tooltip.innerHTML = renderHoverUI(currentTarget); // Force immediate UI refresh
+            tooltip.innerHTML = renderHoverUI(currentTarget); 
         }
         return;
     }
 
-    // DOM Traversal (Layer Up / Layer Down)
-    if (e.altKey && key === 'x') { // Up (Parent)
+    if (e.altKey && key === 'c') {
+        e.preventDefault();
+        document.querySelectorAll('.tester-pic-outline, .tester-pic-highlight, .tester-pic-arrow').forEach(el => {
+            el.classList.remove('tester-pic-outline', 'tester-pic-highlight', 'tester-pic-arrow');
+        });
+        
+        // Wipe all SVGs off the screen and clear the Map memory
+        pictureArrows.forEach(arrow => arrow.remove());
+        pictureArrows.clear();
+        return;
+    }
+
+    if (e.altKey && key === 'x') { 
         e.preventDefault();
         if (currentTarget && currentTarget.parentElement && currentTarget.parentElement.tagName !== 'HTML') {
-            currentTarget.classList.remove('tester-highlight-active');
+            currentTarget.classList.remove('tester-outline-hover', 'tester-highlight-hover');
             currentTarget = currentTarget.parentElement;
-            if (showHighlight) currentTarget.classList.add('tester-highlight-active');
+            if (showOutline) currentTarget.classList.add('tester-outline-hover');
+            if (showHighlight) currentTarget.classList.add('tester-highlight-hover');
             
             if (showTooltip) {
                 tooltip.innerHTML = isLocked ? renderLockedMenu(true) : renderHoverUI(currentTarget);
@@ -171,12 +240,13 @@ document.addEventListener('keydown', (e) => {
         return;
     }
 
-    if (e.altKey && key === 'z') { // Down (First Child)
+    if (e.altKey && key === 'z') { 
         e.preventDefault();
         if (currentTarget && currentTarget.firstElementChild) {
-            currentTarget.classList.remove('tester-highlight-active');
+            currentTarget.classList.remove('tester-outline-hover', 'tester-highlight-hover');
             currentTarget = currentTarget.firstElementChild;
-            if (showHighlight) currentTarget.classList.add('tester-highlight-active');
+            if (showOutline) currentTarget.classList.add('tester-outline-hover');
+            if (showHighlight) currentTarget.classList.add('tester-highlight-hover');
             
             if (showTooltip) {
                 tooltip.innerHTML = isLocked ? renderLockedMenu(true) : renderHoverUI(currentTarget);
@@ -186,12 +256,54 @@ document.addEventListener('keydown', (e) => {
         return;
     }
 
-    // Ignore remaining hotkeys if actively typing in an input
+    if (e.altKey && key === ',') { 
+        e.preventDefault();
+        if (currentTarget && currentTarget.previousElementSibling) {
+            currentTarget.classList.remove('tester-outline-hover', 'tester-highlight-hover');
+            currentTarget = currentTarget.previousElementSibling;
+            if (showOutline) currentTarget.classList.add('tester-outline-hover');
+            if (showHighlight) currentTarget.classList.add('tester-highlight-hover');
+            
+            if (showTooltip) {
+                tooltip.innerHTML = isLocked ? renderLockedMenu(true) : renderHoverUI(currentTarget);
+                updateTooltipPosition(currentTarget);
+            }
+        }
+        return;
+    }
+
+    if (e.altKey && key === '.') { 
+        e.preventDefault();
+        if (currentTarget && currentTarget.nextElementSibling) {
+            currentTarget.classList.remove('tester-outline-hover', 'tester-highlight-hover');
+            currentTarget = currentTarget.nextElementSibling;
+            if (showOutline) currentTarget.classList.add('tester-outline-hover');
+            if (showHighlight) currentTarget.classList.add('tester-highlight-hover');
+            
+            if (showTooltip) {
+                tooltip.innerHTML = isLocked ? renderLockedMenu(true) : renderHoverUI(currentTarget);
+                updateTooltipPosition(currentTarget);
+            }
+        }
+        return;
+    }
+
     if (isInput) return; 
     
     if (!isLocked && (e.altKey && key === 'l')) {
         e.preventDefault();
+        lockedMenuType = 'main';
         lockElement(currentTarget);
+        return;
+    }
+
+    if (e.altKey && key === 'm' && !e.shiftKey && isValidTarget(target)){
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        lockedMenuType = 'picture'; 
+        lockElement(target);
+        if (fromShield && ignoreHoverStyles) shield.style.display = 'block';
         return;
     }
 
@@ -225,8 +337,11 @@ function injectColorSwatches(val) {
 }
 
 function safelyGetCSSData(el, returnAll = false) {
-    const hadHighlight = el.classList.contains('tester-highlight-active');
-    if (hadHighlight) el.classList.remove('tester-highlight-active');
+    const hadOutline = el.classList.contains('tester-outline-hover');
+    const hadHighlight = el.classList.contains('tester-highlight-hover');
+    
+    if (hadOutline) el.classList.remove('tester-outline-hover');
+    if (hadHighlight) el.classList.remove('tester-highlight-hover');
 
     const computed = window.getComputedStyle(el);
     let results = returnAll ? '' : [];
@@ -242,7 +357,9 @@ function safelyGetCSSData(el, returnAll = false) {
         });
     }
 
-    if (hadHighlight && showHighlight) el.classList.add('tester-highlight-active');
+    if (hadOutline && showOutline) el.classList.add('tester-outline-hover');
+    if (hadHighlight && showHighlight) el.classList.add('tester-highlight-hover');
+    
     return results;
 }
 
@@ -289,25 +406,24 @@ function generateA11yBlock(el) {
 }
 
 function renderHoverUI(target) {
-    let shieldText = ignoreHoverStyles ? `<span style="color:var(--tester-danger);">[Alt+S] Shield OFF</span>` : `[Alt+S] Shield ON`;
+    let shieldText = ignoreHoverStyles ? `<span style="color:var(--tester-danger);">[S]hield OFF</span>` : `[S]hield ON`;
     
     let hotkeysHTML = showHotkeys ? `
         <hr>
         <div style="font-size: 10px; opacity: 0.8; text-align: center; margin-top: 4px;">
-            All hotkeys led by Alt key
+            All hotkeys are Alt/Option+[ ] 
         </div>
         <hr>
         <div style="font-size: 10px; opacity: 0.8; text-align: center; margin-top: 4px;">
-            [O]utlines | [I]nfo | [S]hield | [H]otkeys
+            [O]utlines | [I]nfo | ${shieldText} | [H]ighlight | [K]ey Tips
         </div>
         <div style="font-size: 10px; opacity: 0.8; text-align: center; color: var(--tester-tag); font-weight: bold; margin-top: 4px;">
-            Alt+[L] or Shift+Click to Lock
+            Shift+Click to [L]ock | Alt+Click to [M]ark
         </div>
         <div style="font-size: 10px; opacity: 0.8; text-align: center; margin-top: 4px;">
-            [Z/X]Layers | [T]ether | [P]osition
+            [X/Z/,/.] Up/Down/Left/Right | [T]ether | [P]osition | [C]lear
         </div>
-    ` : `
-    `;
+    ` : ``;
 
     return `
         <div style="font-family: monospace; font-size: 13px; margin-bottom: 4px; word-break: break-all; white-space: normal;">
@@ -325,7 +441,7 @@ function renderHoverUI(target) {
 let hoverTimer;
 
 document.addEventListener('mousemove', (e) => {
-    if (!inspectorActive || isLocked) return; 
+    if (!isExtensionValid() || !inspectorActive || isLocked) return; 
 
     if (Math.abs(e.clientX - lastMouse.x) < 3 && Math.abs(e.clientY - lastMouse.y) < 3) {
         return; 
@@ -361,12 +477,13 @@ document.addEventListener('mousemove', (e) => {
 
     const executeHover = () => {
         if (currentTarget && currentTarget !== target) {
-            currentTarget.classList.remove('tester-highlight-active');
+            currentTarget.classList.remove('tester-outline-hover', 'tester-highlight-hover');
         }
         currentTarget = target;
         lastRefreshTime = Date.now();
         
-        if (showHighlight) target.classList.add('tester-highlight-active');
+        if (showOutline) target.classList.add('tester-outline-hover');
+        if (showHighlight) target.classList.add('tester-highlight-hover');
         
         if (showTooltip) {
             tooltip.innerHTML = renderHoverUI(target);
@@ -387,7 +504,7 @@ document.addEventListener('mousemove', (e) => {
 });
 
 function updateTooltipPosition(element) {
-    if (!element || !showTooltip) return;
+    if (!element || (!showTooltip && lockedMenuType !== 'picture')) return;
     const rect = element.getBoundingClientRect();
     const tHeight = tooltip.offsetHeight;
     const tWidth = tooltip.offsetWidth;
@@ -431,14 +548,25 @@ function updateTooltipPosition(element) {
 }
 
 document.addEventListener('click', (e) => {
-    if (!inspectorActive) return;
+    if (!isExtensionValid() || !inspectorActive) return;
 
     let target = e.target;
+    let fromShield = false;
 
     if (target === shield) {
         shield.style.display = 'none';
         target = document.elementFromPoint(e.clientX, e.clientY);
-        // Do not update fromShield here so click behavior is handled naturally
+        fromShield = true;
+    }
+
+    if (e.altKey && !e.shiftKey && isValidTarget(target)) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        lockedMenuType = 'picture'; 
+        lockElement(target);
+        if (fromShield && ignoreHoverStyles) shield.style.display = 'block';
+        return;
     }
 
     if (isLocked) {
@@ -447,10 +575,11 @@ document.addEventListener('click', (e) => {
         return; 
     }
 
-    if (e.shiftKey && isValidTarget(target)) {
+    if (e.shiftKey && !e.altKey && isValidTarget(target)) {
         e.preventDefault(); 
         e.stopPropagation();
         e.stopImmediatePropagation();
+        lockedMenuType = 'main'; 
         lockElement(target);
     }
 }, true); 
@@ -461,23 +590,97 @@ function lockElement(targetElement) {
     tooltip.classList.add('locked-mode'); 
     shield.style.display = 'none'; 
     
-    if (showTooltip) {
-        renderLockedMenu();
+    if (showTooltip || lockedMenuType === 'picture') {
+        if (lockedMenuType === 'picture') {
+            renderPictureMenu();
+        } else {
+            renderLockedMenu();
+        }
         tooltip.style.display = 'block';
     } else {
         tooltip.style.display = 'none'; 
     }
 }
 
+function renderPictureMenu() {
+    const hasOutline = currentTarget.classList.contains('tester-pic-outline');
+    const hasHighlight = currentTarget.classList.contains('tester-pic-highlight');
+    const hasArrow = currentTarget.classList.contains('tester-pic-arrow');
+
+    let html = `
+        <button id="closeMenuBtn" class="close-icon-btn">X</button>
+        <div style="font-family: monospace; font-size: 13px; margin-bottom: 8px; padding-right: 15px; word-break: break-all;">
+            ${generateElementHeader(currentTarget)}
+        </div>
+        <div style="font-size: 11px; text-align: center; margin-bottom: 6px; font-weight: bold; color: var(--tester-val);">Picture Mode</div>
+        <div class="action-grid">
+            <button id="picOutlineBtn" style="background: var(--tester-success); outline: ${hasOutline ? '2px solid white' : 'none'}; outline-offset: -2px;">Outline</button>
+            <button id="picHighlightBtn" style="background: var(--tester-success); outline: ${hasHighlight ? '2px solid white' : 'none'}; outline-offset: -2px;">Highlight</button>
+            <button id="picArrowBtn" style="background: var(--tester-success); outline: ${hasArrow ? '2px solid white' : 'none'}; outline-offset: -2px;">Arrow</button>
+            <button id="picClearBtn" style="background: var(--tester-danger)">Clear</button>
+        </div>
+    `;
+
+    tooltip.innerHTML = html;
+    updateTooltipPosition(currentTarget);
+    
+    document.getElementById('closeMenuBtn').onclick = () => cleanUp();
+    
+    document.getElementById('picOutlineBtn').onclick = (e) => {
+        currentTarget.classList.toggle('tester-pic-outline');
+        e.currentTarget.style.outline = currentTarget.classList.contains('tester-pic-outline') ? '2px solid white' : 'none';
+    };
+    
+    document.getElementById('picHighlightBtn').onclick = (e) => {
+        currentTarget.classList.toggle('tester-pic-highlight');
+        e.currentTarget.style.outline = currentTarget.classList.contains('tester-pic-highlight') ? '2px solid white' : 'none';
+    };
+    
+    // NEW: Arrow Injection Logic
+    document.getElementById('picArrowBtn').onclick = (e) => {
+        const arrowActive = currentTarget.classList.toggle('tester-pic-arrow');
+        e.currentTarget.style.outline = arrowActive ? '2px solid white' : 'none';
+        
+        if (arrowActive) {
+            let arrow = document.createElement('div');
+            arrow.className = 'tester-drawn-arrow';
+            // Injecting a crisp, professional SVG
+            arrow.innerHTML = `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--tester-user-outline, #ff80ff)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.4));">
+                                   <line x1="4" y1="4" x2="20" y2="20"></line>
+                                   <polyline points="14 20 20 20 20 14"></polyline>
+                               </svg>`;
+            document.body.appendChild(arrow);
+            pictureArrows.set(currentTarget, arrow);
+            updateAllArrows();
+        } else {
+            let arrow = pictureArrows.get(currentTarget);
+            if (arrow) { 
+                arrow.remove(); 
+                pictureArrows.delete(currentTarget); 
+            }
+        }
+    };
+    
+    document.getElementById('picClearBtn').onclick = () => {
+        currentTarget.classList.remove('tester-pic-outline', 'tester-pic-highlight', 'tester-pic-arrow');
+        let arrow = pictureArrows.get(currentTarget);
+        if (arrow) { 
+            arrow.remove(); 
+            pictureArrows.delete(currentTarget); 
+        }
+        cleanUp();
+    };
+}
+
 function renderLockedMenu(returnHtmlString = false) {
     const isInput = currentTarget.tagName === 'INPUT' || currentTarget.tagName === 'TEXTAREA';
     let autoHTML = enableAuto ? `
     <div class="action-grid">
-        <button id="copyElPropsBtn" class="btn-success" var(--tester-success)">HTML+CSS</button>
-        <button id="showLocatorsBtn" class="btn-success" var(--tester-locator)">Locators</button>
+        <button id="copyElPropsBtn" class="btn-success" style="background: var(--tester-success)">HTML+CSS</button>
+        <button id="showLocatorsBtn" class="btn-success" style="background: var(--tester-locator)">Locators</button>
     </div>`:
-    `<button id="copyElPropsBtn" class="action-row">HTML+CSS</button>`;
-    let fillBtnHTML = isInput ? `<button id="fillMax" class"action-row">Fill Max + Overflow</button>` : '';
+    `<button id="copyElPropsBtn" class="action-row" style="background: var(--tester-success)">HTML+CSS</button>`;
+    let fillBtnHTML = isInput ? `<button id="fillMax" class="action-row" style="background: var(--tester-success)">Fill Max + Overflow</button>` : '';
 
     let html = `
         <button id="closeMenuBtn" class="close-icon-btn">X</button>
@@ -492,8 +695,8 @@ function renderLockedMenu(returnHtmlString = false) {
         <hr>
         
         <div class="action-grid">
-            <button id="copyCssBtn" class="btn-success">Copy CSS</button>
-            <button id="copyAllCssBtn" class="btn-success">All CSS</button>
+            <button id="copyCssBtn" class="btn-success" style="background: var(--tester-success)">Copy CSS</button>
+            <button id="copyAllCssBtn" class="btn-success" style="background: var(--tester-success)">All CSS</button>
         </div>
         ${autoHTML}
         ${fillBtnHTML}
@@ -510,9 +713,10 @@ function renderLockedMenu(returnHtmlString = false) {
     document.getElementById('copyAllCssBtn').onclick = (e) => copyToClipboard(safelyGetCSSData(currentTarget, true), e.currentTarget);
 
     document.getElementById('copyElPropsBtn').onclick = (e) => {
-        currentTarget.classList.remove('tester-highlight-active');
+        currentTarget.classList.remove('tester-outline-hover', 'tester-highlight-hover');
         const cloneHTML = currentTarget.outerHTML;
-        if (showHighlight) currentTarget.classList.add('tester-highlight-active');
+        if (showOutline) currentTarget.classList.add('tester-outline-hover');
+        if (showHighlight) currentTarget.classList.add('tester-highlight-hover');
         copyToClipboard(`--- HTML ---\n${cloneHTML}\n\n--- Properties ---\n${generateRawCopyText()}`, e.currentTarget);
     };
 
@@ -622,8 +826,12 @@ function fillAndOverride(element, length) {
 
 function cleanUp() {
     isLocked = false;
+    lockedMenuType = 'main'; 
     tooltip.style.display = 'none';
     tooltip.classList.remove('locked-mode'); 
     updateShieldState(); 
-    if (currentTarget) { currentTarget.classList.remove('tester-highlight-active'); currentTarget = null; }
+    if (currentTarget) { 
+        currentTarget.classList.remove('tester-outline-hover', 'tester-highlight-hover'); 
+        currentTarget = null; 
+    }
 }

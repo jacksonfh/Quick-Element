@@ -18,6 +18,7 @@
     --tester-list-bg: #57606f;
     --tester-input-bg: #1e242e;
     --tester-locator: #9b59b6;
+    --highlight: #ffee00;
 }
 
 .theme-light {
@@ -39,11 +40,138 @@
     --tester-input-bg: #ffffff;
 }
 
-.tester-highlight-active {
+
+.bbh-bogle-regular {
+    font-family: "BBH Bogle", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+}
+
+.bbh-bartle-regular {
+    font-family: "BBH Bartle", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+}
+
+.quickElement-Head {
+    font-family: "BBH Bartle", sans-serif;
+    font-weight: 200;
+    text-align: center;
+}
+
+.entry-row {
+    height: 27;
+    margin-bottom: 5px;
+}
+
+.entry-btn {
+    margin-left: 15px;
+}
+
+/* Normal Hover States */
+.tester-outline-hover {
     outline: 2px solid var(--tester-user-outline, #ff80ff) !important;
 }
 
-/* --- TOOLTIP STYLES --- */
+.tester-highlight-hover {
+    background-color: var(--tester-user-highlight, #ffee0093) !important;
+}
+
+/* Picture Mode Sticky States */
+.tester-pic-outline {
+    outline: 3px dashed var(--tester-user-outline, #ff80ff) !important;
+    outline-offset: 2px !important;
+}
+
+.tester-pic-highlight {
+    background-color: var(--tester-user-highlight, #ffee0093) !important;
+}
+
+
+/* --- PICTURE MODE ARROWS --- */
+.tester-drawn-arrow {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 45px;
+    height: 45px;
+    z-index: 2147483646;
+    /* Just under the tooltip */
+    pointer-events: none;
+    /* Allows clicks to pass through to the page */
+}
+
+.small-line {
+    font-size: 10px;
+    opacity: 0.7;
+    vertical-align: center;
+    align-items: top;
+}
+
+.subhead-Row {
+    font-size: 10px;
+    text-transform: uppercase;
+    opacity: 0.7;
+    margin-top: 10px;
+    margin-bottom: 6px;
+    font-weight: bold;
+
+}
+
+.row {
+    padding-left: 5px;
+    height: 27;
+
+}
+
+.divider {
+    opacity: 0.3;
+}
+
+
+/*MARK: Definitions
+*/
+.definition {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+}
+
+/* Definition text */
+.definitiontext {
+    visibility: hidden;
+    /* Hidden by default */
+    background-color: darkslategray;
+    color: #ffffff;
+    text-align: center;
+    padding: 5px 5px 5px 5px;
+    border-radius: 6px;
+    position: absolute;
+    top: -5px;
+    right: 105%;
+    width: max-content;
+    font-size: 10px;
+}
+
+/* Show the definition text on hover */
+.definition:hover .definitiontext {
+    visibility: visible;
+}
+
+.definitiontext::after {
+    content: " ";
+    position: absolute;
+    top: 50%;
+    left: 100%;
+    /* To the right of the definition */
+    margin-top: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent transparent transparent darkslategray;
+}
+
+/* MARK: Tooltip Style
+*/
 #tester-tooltip {
     position: fixed;
     padding: 12px 14px;
@@ -225,14 +353,13 @@ body.tester-popup {
 .tester-popup .row {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 10px;
+    margin-top: 10px;
     align-items: center;
 }
 
 .drop {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 10px;
     align-items: center;
 }
 
@@ -329,8 +456,26 @@ body.tester-popup {
     border: 1px dashed var(--tester-btn-bg);
 }
 
+.tester-popup::-webkit-scrollbar {
+    width: 6px;
+}
 
-/* MARK: UI TOGGLES */
+.tester-popup::-webkit-scrollbar-track {
+    background: var(--tester-bg-solid);
+}
+
+.tester-popup::-webkit-scrollbar-thumb {
+    background: var(--tester-border);
+    border-radius: 4px;
+}
+
+.tester-popup::-webkit-scrollbar-thumb:hover {
+    background: var(--tester-class);
+}
+
+
+/* MARK: UI TOGGLES
+ */
 .switch {
     position: relative;
     display: inline-block;
