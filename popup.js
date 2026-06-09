@@ -62,6 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
       "showHotkeys",
       "showHighlight",
       "highlightColor",
+      "highlightOpacity", // NEW
     ],
     (result) => {
       renderList(
@@ -81,6 +82,8 @@ document.addEventListener("DOMContentLoaded", () => {
         result.outlineColor || "#ff80ff";
       document.getElementById("HighlightColor").value =
         result.highlightColor || "#ffee00";
+      document.getElementById("HighlightOpacity").value =
+        result.highlightOpacity !== undefined ? result.highlightOpacity : 0.5;
 
       masterToggle.checked = result.masterActive !== false;
       if (!masterToggle.checked) siteToggleRow.classList.add("dimmed");
@@ -233,6 +236,14 @@ document.addEventListener("DOMContentLoaded", () => {
     .addEventListener("input", (e) =>
       chrome.storage.local.set({ highlightColor: e.target.value }),
     );
+  // NEW
+  document
+    .getElementById("HighlightOpacity")
+    .addEventListener("input", (e) =>
+      chrome.storage.local.set({
+        highlightOpacity: parseFloat(e.target.value),
+      }),
+    );
 
   document.getElementById("addTagBtn").addEventListener("click", () => {
     const newTag = document
@@ -328,7 +339,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // MARK: Hotkey Wiring
   document.addEventListener("keydown", (e) => {
     const key = e.key.toLowerCase();
     if (e.altKey) {
