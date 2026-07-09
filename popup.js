@@ -25,9 +25,18 @@ document.addEventListener("DOMContentLoaded", () => {
   const languageSelect = document.getElementById("languageSelect");
   const xpathSelect = document.getElementById("xpathSelect");
 
+  const profileSelect = document.getElementById("profileSelect");
+  const createNewProfileBtn = document.getElementById("createNewProfileBtn");
+  const newProfileContainer = document.getElementById("newProfileContainer");
+  const newProfileName = document.getElementById("newProfileName");
+  const confirmNewProfileBtn = document.getElementById("confirmNewProfileBtn");
+  const deleteProfileBtn = document.getElementById("deleteProfileBtn");
+
   let currentHost = "";
   let currentMode = "enabled";
   let customSitesList = [];
+  let profiles = {};
+  let activeProfile = "Track Everything";
 
   chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
     if (tabs[0] && tabs[0].url) {
@@ -62,19 +71,77 @@ document.addEventListener("DOMContentLoaded", () => {
       "showHotkeys",
       "showHighlight",
       "highlightColor",
-      "highlightOpacity", // NEW
+      "highlightOpacity",
+      "censorMode",
+      "profiles",
+      "activeProfile",
     ],
     (result) => {
-      renderList(
-        result.customCSS || ["max-length", "color", "font-size", "padding"],
-        cssList,
-        "customCSS",
-      );
-      renderList(
-        result.trackedTags || ["INPUT", "TEXTAREA"],
-        tagList,
-        "trackedTags",
-      );
+      const defaultProfiles = {
+        "QA Tester": {
+          css: [
+            "max-length",
+            "color",
+            "font-size",
+            "padding",
+            "z-index",
+            "visibility",
+            "cursor",
+          ],
+          tags: ["INPUT", "TEXTAREA", "BUTTON", "A", "SELECT"],
+          trackAllElements: false,
+        },
+        "Frontend Dev": {
+          css: [
+            "display",
+            "position",
+            "width",
+            "height",
+            "margin",
+            "padding",
+            "color",
+            "background-color",
+          ],
+          tags: ["DIV", "SPAN", "P", "A", "IMG", "HEADER", "FOOTER", "BUTTON"],
+          trackAllElements: false,
+        },
+        Presenter: {
+          css: ["background-color", "border-radius", "box-shadow", "filter"],
+          tags: ["DIV", "IMG", "P", "SPAN"],
+          trackAllElements: false,
+        },
+        "Track Everything": {
+          css: ["width", "height", "margin", "padding"],
+          tags: [],
+          trackAllElements: true,
+        },
+      };
+
+      profiles = result.profiles || {};
+      activeProfile = result.activeProfile;
+
+      // Migrate / Fallback
+      if (!profiles["Track Everything"])
+        profiles = { ...defaultProfiles, ...profiles };
+      if (!activeProfile || activeProfile === "Default")
+        activeProfile = "Track Everything";
+
+      chrome.storage.local.set({
+        profiles: profiles,
+        activeProfile: activeProfile,
+      });
+
+      updateProfileDropdown();
+
+      let activeCSS = result.customCSS || profiles[activeProfile].css;
+      let activeTags = result.trackedTags || profiles[activeProfile].tags;
+
+      renderList(activeCSS, cssList, "customCSS");
+      renderList(activeTags, tagList, "trackedTags");
+      trackAllToggle.checked =
+        result.trackAllElements !== undefined
+          ? result.trackAllElements
+          : profiles[activeProfile].trackAllElements;
 
       document.body.className = `tester-popup theme-${result.theme || "dark"}`;
       document.getElementById("themeSelect").value = result.theme || "dark";
@@ -84,6 +151,8 @@ document.addEventListener("DOMContentLoaded", () => {
         result.highlightColor || "#ffee00";
       document.getElementById("HighlightOpacity").value =
         result.highlightOpacity !== undefined ? result.highlightOpacity : 0.5;
+      document.getElementById("censorModeSelect").value =
+        result.censorMode || "blur";
 
       masterToggle.checked = result.masterActive !== false;
       if (!masterToggle.checked) siteToggleRow.classList.add("dimmed");
@@ -105,7 +174,6 @@ document.addEventListener("DOMContentLoaded", () => {
       showHighlightToggle.checked = result.showHighlight !== false;
       showTooltipToggle.checked = result.showTooltip !== false;
       showHotkeyToggle.checked = result.showHotkeys !== false;
-      trackAllToggle.checked = result.trackAllElements || false;
       hoverDelayInput.value =
         result.hoverDelay !== undefined ? result.hoverDelay : 20;
       dynamicArrowToggle.checked = result.dynamicArrow !== false;
@@ -128,6 +196,119 @@ document.addEventListener("DOMContentLoaded", () => {
     },
   );
 
+  // --- PROFILE LOGIC ---
+  function updateProfileDropdown() {
+    profileSelect.innerHTML = "";
+    Object.keys(profiles).forEach((name) => {
+      const opt = document.createElement("option");
+      opt.value = name;
+      opt.innerText = name;
+      if (name === activeProfile) opt.selected = true;
+      profileSelect.appendChild(opt);
+    });
+  }
+
+  profileSelect.addEventListener("change", (e) => {
+    activeProfile = e.target.value;
+    const p = profiles[activeProfile];
+    chrome.storage.local.set({
+      activeProfile: activeProfile,
+      customCSS: p.css,
+      trackedTags: p.tags,
+      trackAllElements: p.trackAllElements || false,
+    });
+    renderList(p.css, cssList, "customCSS");
+    renderList(p.tags, tagList, "trackedTags");
+    trackAllToggle.checked = p.trackAllElements || false;
+  });
+
+  createNewProfileBtn.addEventListener("click", () => {
+    newProfileContainer.style.display =
+      newProfileContainer.style.display === "none" ? "flex" : "none";
+    if (newProfileContainer.style.display === "flex") {
+      newProfileName.focus();
+    }
+  });
+
+  confirmNewProfileBtn.addEventListener("click", () => {
+    const name = newProfileName.value.trim();
+    if (!name) return;
+
+    chrome.storage.local.get(
+      ["customCSS", "trackedTags", "trackAllElements"],
+      (res) => {
+        profiles[name] = {
+          css: res.customCSS || [],
+          tags: res.trackedTags || [],
+          trackAllElements: res.trackAllElements || false,
+        };
+        activeProfile = name;
+        chrome.storage.local.set({
+          profiles: profiles,
+          activeProfile: activeProfile,
+        });
+        updateProfileDropdown();
+        newProfileName.value = "";
+        newProfileContainer.style.display = "none";
+      },
+    );
+  });
+
+  deleteProfileBtn.addEventListener("click", () => {
+    if (Object.keys(profiles).length <= 1) return;
+    delete profiles[activeProfile];
+    activeProfile = Object.keys(profiles)[0];
+    const p = profiles[activeProfile];
+    chrome.storage.local.set({
+      profiles: profiles,
+      activeProfile: activeProfile,
+      customCSS: p.css,
+      trackedTags: p.tags,
+      trackAllElements: p.trackAllElements || false,
+    });
+    updateProfileDropdown();
+    renderList(p.css, cssList, "customCSS");
+    renderList(p.tags, tagList, "trackedTags");
+    trackAllToggle.checked = p.trackAllElements || false;
+  });
+
+  // NEW: Flash visual indicator
+  let saveIndicatorTimer;
+  function flashSaveIndicator() {
+    const indicator = document.getElementById("profileSaveIndicator");
+    indicator.style.opacity = "1";
+    clearTimeout(saveIndicatorTimer);
+    saveIndicatorTimer = setTimeout(() => {
+      indicator.style.opacity = "0";
+    }, 1200);
+  }
+
+  // RESTORED: Auto-saving into the actual profile
+  function saveProfileData(storageKey, newItems, inputIdToFlash = null) {
+    if (storageKey === "customCSS") profiles[activeProfile].css = newItems;
+    if (storageKey === "trackedTags") profiles[activeProfile].tags = newItems;
+    if (storageKey === "trackAllElements")
+      profiles[activeProfile].trackAllElements = newItems;
+    chrome.storage.local.set({ [storageKey]: newItems, profiles: profiles });
+
+    flashSaveIndicator(); // Still flash the top header for general profile changes
+
+    // Flash the specific input box if provided
+    if (inputIdToFlash) {
+      const inputEl = document.getElementById(inputIdToFlash);
+      if (inputEl) {
+        const ogTransition = inputEl.style.transition;
+        inputEl.style.transition = "background-color 0.2s";
+        inputEl.style.backgroundColor = "var(--tester-success)";
+        setTimeout(() => {
+          inputEl.style.backgroundColor = "";
+          setTimeout(() => (inputEl.style.transition = ogTransition), 200);
+        }, 300);
+      }
+    }
+  }
+
+  // --- GENERAL EVENT LISTENERS ---
   masterToggle.addEventListener("change", (e) => {
     chrome.storage.local.set({ masterActive: e.target.checked });
     if (e.target.checked) siteToggleRow.classList.remove("dimmed");
@@ -175,7 +356,7 @@ document.addEventListener("DOMContentLoaded", () => {
     chrome.storage.local.set({ showHotkeys: e.target.checked }),
   );
   trackAllToggle.addEventListener("change", (e) =>
-    chrome.storage.local.set({ trackAllElements: e.target.checked }),
+    saveProfileData("trackAllElements", e.target.checked),
   );
   hoverDelayInput.addEventListener("change", (e) =>
     chrome.storage.local.set({ hoverDelay: parseInt(e.target.value) || 0 }),
@@ -186,6 +367,11 @@ document.addEventListener("DOMContentLoaded", () => {
   ignoreHoverToggle.addEventListener("change", (e) =>
     chrome.storage.local.set({ ignoreHoverStyles: e.target.checked }),
   );
+  document
+    .getElementById("censorModeSelect")
+    .addEventListener("change", (e) =>
+      chrome.storage.local.set({ censorMode: e.target.value }),
+    );
 
   document.getElementById("tagInput").addEventListener("keydown", (e) => {
     if (e.key === "Enter") document.getElementById("addTagBtn").click();
@@ -236,14 +422,11 @@ document.addEventListener("DOMContentLoaded", () => {
     .addEventListener("input", (e) =>
       chrome.storage.local.set({ highlightColor: e.target.value }),
     );
-  // NEW
-  document
-    .getElementById("HighlightOpacity")
-    .addEventListener("input", (e) =>
-      chrome.storage.local.set({
-        highlightOpacity: parseFloat(e.target.value),
-      }),
-    );
+  document.getElementById("HighlightOpacity").addEventListener("input", (e) =>
+    chrome.storage.local.set({
+      highlightOpacity: parseFloat(e.target.value),
+    }),
+  );
 
   document.getElementById("addTagBtn").addEventListener("click", () => {
     const newTag = document
@@ -251,11 +434,11 @@ document.addEventListener("DOMContentLoaded", () => {
       .value.trim()
       .toUpperCase();
     if (!newTag) return;
-    chrome.storage.local.get(["trackedTags"], (result) => {
-      const tags = result.trackedTags || ["INPUT", "TEXTAREA"];
+    chrome.storage.local.get(["trackedTags"], (res) => {
+      const tags = res.trackedTags || [];
       if (!tags.includes(newTag)) {
         tags.push(newTag);
-        chrome.storage.local.set({ trackedTags: tags });
+        saveProfileData("trackedTags", tags, "tagInput"); // <--- ADDED 'tagInput'
         renderList(tags, tagList, "trackedTags");
         document.getElementById("tagInput").value = "";
       }
@@ -268,11 +451,28 @@ document.addEventListener("DOMContentLoaded", () => {
       .value.trim()
       .toLowerCase();
     if (!newCss) return;
-    chrome.storage.local.get(["customCSS"], (result) => {
-      const props = result.customCSS || ["max-length", "color", "font-size"];
+    chrome.storage.local.get(["customCSS"], (res) => {
+      const props = res.customCSS || [];
       if (!props.includes(newCss)) {
         props.push(newCss);
-        chrome.storage.local.set({ customCSS: props });
+        saveProfileData("customCSS", props, "cssInput"); // <--- ADDED 'cssInput'
+        renderList(props, cssList, "customCSS");
+        document.getElementById("cssInput").value = "";
+      }
+    });
+  });
+
+  document.getElementById("addCssBtn").addEventListener("click", () => {
+    const newCss = document
+      .getElementById("cssInput")
+      .value.trim()
+      .toLowerCase();
+    if (!newCss) return;
+    chrome.storage.local.get(["customCSS"], (res) => {
+      const props = res.customCSS || [];
+      if (!props.includes(newCss)) {
+        props.push(newCss);
+        saveProfileData("customCSS", props, "cssInput"); // <--- ADDED 'cssInput'
         renderList(props, cssList, "customCSS");
         document.getElementById("cssInput").value = "";
       }
@@ -309,7 +509,9 @@ document.addEventListener("DOMContentLoaded", () => {
       li.querySelector(".remove-btn").addEventListener("click", (e) => {
         const itemToRemove = e.currentTarget.getAttribute("data-item");
         const newItems = items.filter((i) => i !== itemToRemove);
-        chrome.storage.local.set({ [storageKey]: newItems });
+        // Determine which input to flash based on the storage key
+        const inputId = storageKey === "customCSS" ? "cssInput" : "tagInput";
+        saveProfileData(storageKey, newItems, inputId);
         renderList(newItems, container, storageKey);
       });
       container.appendChild(li);
@@ -335,7 +537,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const newItems = [...container.querySelectorAll("li")].map(
         (li) => li.dataset.item,
       );
-      chrome.storage.local.set({ [storageKey]: newItems });
+      const inputId = storageKey === "customCSS" ? "cssInput" : "tagInput";
+      saveProfileData(storageKey, newItems, inputId);
     });
   }
 
@@ -367,8 +570,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function getSoftwareVersion() {
     const manifestData = chrome.runtime.getManifest();
-    const version = manifestData.version;
-    return `v.${version}`;
+    return `v.${manifestData.version}`;
   }
   document.getElementById("version_number").innerHTML = getSoftwareVersion();
 });

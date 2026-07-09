@@ -29,6 +29,10 @@ let showHotkeys = true;
 let lastRefreshTime = 0;
 let pictureArrows = new Map();
 
+// --- PROFILE ENGINE VARIABLES ---
+let profiles = {};
+let activeProfile = "Track Everything";
+
 // --- DRAWING ENGINE VARIABLES ---
 let isDrawingMode = false;
 let isDrawing = false;
@@ -76,7 +80,7 @@ penIndicator.style.cssText =
   "position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); border-radius:50%; border:1px solid #fff; box-shadow:0 0 2px rgba(0,0,0,0.8); transition:width 0.05s, height 0.05s;";
 brushIndicatorContainer.appendChild(penIndicator);
 
-// --- NEW: TOAST NOTIFICATION ENGINE ---
+// --- TOAST NOTIFICATION ENGINE ---
 let toastTimer;
 const toastNotification = document.createElement("div");
 toastNotification.id = "tester-toast-notification";
@@ -85,7 +89,7 @@ toastNotification.style.cssText =
 document.body.appendChild(toastNotification);
 
 function showToast(message, color = "#f1f2f6") {
-  toastNotification.innerHTML = `<span style="color: ${color};">${message}</span>`;
+  toastNotification.innerHTML = `<span style="color: ${color};">[ ${message} ]</span>`;
   toastNotification.style.display = "block";
 
   // Force browser reflow so the transition animation triggers
@@ -146,15 +150,68 @@ function loadConfig() {
       "showHighlight",
       "highlightColor",
       "highlightOpacity",
+      "censorMode",
+      "profiles",
+      "activeProfile",
     ],
     (result) => {
-      trackedCSS = result.customCSS || [
-        "max-length",
-        "color",
-        "font-size",
-        "padding",
-      ];
-      trackedTags = result.trackedTags || ["INPUT", "TEXTAREA"];
+      const defaultProfiles = {
+        "QA Tester": {
+          css: [
+            "max-length",
+            "color",
+            "font-size",
+            "padding",
+            "z-index",
+            "visibility",
+            "cursor",
+          ],
+          tags: ["INPUT", "TEXTAREA", "BUTTON", "A", "SELECT"],
+          trackAllElements: false,
+        },
+        "Frontend Dev": {
+          css: [
+            "display",
+            "position",
+            "width",
+            "height",
+            "margin",
+            "padding",
+            "color",
+            "background-color",
+          ],
+          tags: ["DIV", "SPAN", "P", "A", "IMG", "HEADER", "FOOTER", "BUTTON"],
+          trackAllElements: false,
+        },
+        Presenter: {
+          css: ["background-color", "border-radius", "box-shadow", "filter"],
+          tags: ["DIV", "IMG", "P", "SPAN"],
+          trackAllElements: false,
+        },
+        "Track Everything": {
+          css: ["width", "height", "margin", "padding"],
+          tags: [],
+          trackAllElements: true,
+        },
+      };
+
+      profiles = result.profiles || {};
+      activeProfile = result.activeProfile;
+
+      // Migrate / Fallback
+      if (!profiles["Track Everything"]) {
+        profiles = { ...defaultProfiles, ...profiles };
+      }
+      if (!activeProfile || activeProfile === "Default") {
+        activeProfile = "Track Everything";
+      }
+
+      trackedCSS = result.customCSS || profiles[activeProfile].css || [];
+      trackedTags = result.trackedTags || profiles[activeProfile].tags || [];
+      trackAllElements =
+        result.trackAllElements !== undefined
+          ? result.trackAllElements
+          : profiles[activeProfile].trackAllElements || false;
 
       enableA11y = result.enableA11y || false;
       trackedA11y = result.trackedA11y || ["name", "role", "focusable"];
@@ -163,7 +220,6 @@ function loadConfig() {
       testLanguage = result.language || "js";
       xpathMode = result.xpathMode || "relative";
 
-      trackAllElements = result.trackAllElements || false;
       hoverDelay = result.hoverDelay !== undefined ? result.hoverDelay : 20;
       dynamicArrow = result.dynamicArrow !== false;
       ignoreHoverStyles = result.ignoreHoverStyles || false;
@@ -188,6 +244,11 @@ function loadConfig() {
       document.documentElement.style.setProperty(
         "--tester-user-highlight",
         baseColor + alphaHex,
+      );
+
+      document.documentElement.setAttribute(
+        "data-tester-censor-mode",
+        result.censorMode || "blur",
       );
 
       const isMasterOn = result.masterActive !== false;
@@ -311,6 +372,7 @@ document.addEventListener(
 document.addEventListener(
   "wheel",
   (e) => {
+    // Brush sizing
     if (isDrawingMode && e.shiftKey) {
       e.preventDefault();
       drawSize += e.deltaY < 0 ? 2 : -2;
@@ -348,6 +410,36 @@ document.addEventListener(
         }, 100);
       }, 800);
     }
+    // Profile Cycling
+    else if (e.altKey && !isDrawingMode) {
+      e.preventDefault();
+
+      let profileNames = Object.keys(profiles || {});
+      if (profileNames.length <= 1) return;
+
+      let currentIndex = profileNames.indexOf(activeProfile);
+      if (currentIndex === -1) currentIndex = 0;
+
+      if (e.deltaY < 0) {
+        currentIndex =
+          (currentIndex - 1 + profileNames.length) % profileNames.length;
+      } else {
+        currentIndex = (currentIndex + 1) % profileNames.length;
+      }
+
+      activeProfile = profileNames[currentIndex];
+      let selected = profiles[activeProfile];
+
+      if (selected) {
+        chrome.storage.local.set({
+          activeProfile: activeProfile,
+          customCSS: selected.css,
+          trackedTags: selected.tags,
+          trackAllElements: selected.trackAllElements || false,
+        });
+        showToast(`Profile: ${activeProfile}`, "var(--tester-class, #54a0ff)");
+      }
+    }
   },
   { passive: false, capture: true },
 );
@@ -368,32 +460,36 @@ document.addEventListener("keydown", (e) => {
     drawCanvas.style.width = inkFrozen ? "100vw" : "100%";
     drawCanvas.style.height = inkFrozen ? "100vh" : "100%";
 
-    // Show toast for visual confirmation
     showToast(
-      inkFrozen ? "❄️ Ink Frozen" : "⚓ Ink Anchored",
+      inkFrozen ? "Ink Frozen" : "Ink Anchored",
       inkFrozen
         ? "var(--tester-danger, #ff4757)"
         : "var(--tester-success, #2ed573)",
     );
 
-    if (showTooltip && currentTarget && !isDrawingMode && !isLocked) {
+    if (
+      (showTooltip || isLocked) &&
+      currentTarget &&
+      !isDrawingMode &&
+      !isLocked
+    ) {
       tooltip.innerHTML = renderHoverUI(currentTarget);
     }
     return;
   }
 
-  if (e.altKey && key === "w") {
+  if (e.altKey && key === "n") {
     e.preventDefault();
     isDrawingMode = !isDrawingMode;
 
     if (isDrawingMode) {
       document.body.style.cursor = "crosshair";
-      showToast("🖍️ Draw Mode: ON", "var(--tester-success, #2ed573)");
+      showToast("Note Mode: ON", "var(--tester-success, #2ed573)");
       cleanUp();
     } else {
       document.body.style.cursor = "";
       brushIndicatorContainer.style.display = "none";
-      showToast("Draw Mode: OFF");
+      showToast("Note Mode: OFF");
     }
     return;
   }
@@ -404,7 +500,9 @@ document.addEventListener("keydown", (e) => {
     chrome.storage.local.set({ ignoreHoverStyles: ignoreHoverStyles });
     updateShieldState();
 
-    if (showTooltip && currentTarget && !isDrawingMode) {
+    showToast(ignoreHoverStyles ? "Shield: OFF" : "Shield: ON");
+
+    if ((showTooltip || isLocked) && currentTarget && !isDrawingMode) {
       tooltip.innerHTML = isLocked
         ? renderLockedMenu(true)
         : renderHoverUI(currentTarget);
@@ -421,6 +519,7 @@ document.addEventListener("keydown", (e) => {
       if (showOutline) currentTarget.classList.add("tester-outline-hover");
       else currentTarget.classList.remove("tester-outline-hover");
     }
+    showToast(showOutline ? "Outlines: ON" : "Outlines: OFF");
     return;
   }
 
@@ -432,6 +531,7 @@ document.addEventListener("keydown", (e) => {
       if (showHighlight) currentTarget.classList.add("tester-highlight-hover");
       else currentTarget.classList.remove("tester-highlight-hover");
     }
+    showToast(showHighlight ? "Highlights: ON" : "Highlights: OFF");
     return;
   }
 
@@ -439,10 +539,14 @@ document.addEventListener("keydown", (e) => {
     e.preventDefault();
     showTooltip = !showTooltip;
     chrome.storage.local.set({ showTooltip: showTooltip });
-    if (showTooltip && currentTarget && !isDrawingMode) {
-      tooltip.innerHTML = isLocked
-        ? renderLockedMenu(true)
-        : renderHoverUI(currentTarget);
+
+    showToast(showTooltip ? "Info Box: ON" : "Info Box: OFF");
+
+    if (isLocked) {
+      tooltip.innerHTML = renderLockedMenu(true);
+      updateTooltipPosition(currentTarget);
+    } else if (showTooltip && currentTarget && !isDrawingMode) {
+      tooltip.innerHTML = renderHoverUI(currentTarget);
       tooltip.style.display = "block";
       updateTooltipPosition(currentTarget);
     } else {
@@ -455,8 +559,13 @@ document.addEventListener("keydown", (e) => {
     e.preventDefault();
     showHotkeys = !showHotkeys;
     chrome.storage.local.set({ showHotkeys: showHotkeys });
-    if (showTooltip && currentTarget && !isLocked && !isDrawingMode) {
-      tooltip.innerHTML = renderHoverUI(currentTarget);
+    showToast(showHotkeys ? "Hotkey Guide: ON" : "Hotkey Guide: OFF");
+
+    if ((showTooltip || isLocked) && currentTarget && !isDrawingMode) {
+      tooltip.innerHTML = isLocked
+        ? renderLockedMenu(true)
+        : renderHoverUI(currentTarget);
+      updateTooltipPosition(currentTarget);
     }
     return;
   }
@@ -465,13 +574,14 @@ document.addEventListener("keydown", (e) => {
     e.preventDefault();
     document
       .querySelectorAll(
-        ".tester-pic-outline, .tester-pic-highlight, .tester-pic-arrow",
+        ".tester-pic-outline, .tester-pic-highlight, .tester-pic-arrow, .tester-pic-censor",
       )
       .forEach((el) => {
         el.classList.remove(
           "tester-pic-outline",
           "tester-pic-highlight",
           "tester-pic-arrow",
+          "tester-pic-censor",
         );
       });
 
@@ -480,7 +590,7 @@ document.addEventListener("keydown", (e) => {
 
     drawnPaths.clear();
     drawCanvas.innerHTML = "";
-    showToast("🧹 Canvas Cleared", "var(--tester-danger, #ff4757)");
+    showToast("Canvas Cleared", "var(--tester-danger, #ff4757)");
     return;
   }
 
@@ -501,7 +611,7 @@ document.addEventListener("keydown", (e) => {
       if (showOutline) currentTarget.classList.add("tester-outline-hover");
       if (showHighlight) currentTarget.classList.add("tester-highlight-hover");
 
-      if (showTooltip) {
+      if (showTooltip || isLocked) {
         tooltip.innerHTML = isLocked
           ? renderLockedMenu(true)
           : renderHoverUI(currentTarget);
@@ -522,7 +632,7 @@ document.addEventListener("keydown", (e) => {
       if (showOutline) currentTarget.classList.add("tester-outline-hover");
       if (showHighlight) currentTarget.classList.add("tester-highlight-hover");
 
-      if (showTooltip) {
+      if (showTooltip || isLocked) {
         tooltip.innerHTML = isLocked
           ? renderLockedMenu(true)
           : renderHoverUI(currentTarget);
@@ -543,7 +653,7 @@ document.addEventListener("keydown", (e) => {
       if (showOutline) currentTarget.classList.add("tester-outline-hover");
       if (showHighlight) currentTarget.classList.add("tester-highlight-hover");
 
-      if (showTooltip) {
+      if (showTooltip || isLocked) {
         tooltip.innerHTML = isLocked
           ? renderLockedMenu(true)
           : renderHoverUI(currentTarget);
@@ -564,7 +674,7 @@ document.addEventListener("keydown", (e) => {
       if (showOutline) currentTarget.classList.add("tester-outline-hover");
       if (showHighlight) currentTarget.classList.add("tester-highlight-hover");
 
-      if (showTooltip) {
+      if (showTooltip || isLocked) {
         tooltip.innerHTML = isLocked
           ? renderLockedMenu(true)
           : renderHoverUI(currentTarget);
@@ -585,11 +695,13 @@ document.addEventListener("keydown", (e) => {
 
   if (e.altKey && key === "t") {
     tetherToElement = !tetherToElement;
+    showToast(tetherToElement ? "Tether: Element" : "Tether: Mouse");
     updateTooltipPosition(currentTarget);
     return;
   }
   if (e.altKey && key === "p") {
     positionAbove = !positionAbove;
+    showToast(positionAbove ? "Position: Above" : "Position: Below");
     updateTooltipPosition(currentTarget);
     return;
   }
@@ -726,7 +838,7 @@ document.body.appendChild(tooltip);
 
 loadConfig();
 
-function isValidTarget(el) {
+function isValidTarget(el, forceAllow = false) {
   if (!el || el.nodeType !== 1) return false;
   if (
     el === shield ||
@@ -739,6 +851,9 @@ function isValidTarget(el) {
 
   const invalidTags = ["SCRIPT", "STYLE", "HEAD", "META", "LINK", "NOSCRIPT"];
   if (invalidTags.includes(el.tagName)) return false;
+
+  // "X-Ray" bypass when Alt is held
+  if (forceAllow) return true;
 
   if (trackAllElements) return true;
   return trackedTags.includes(el.tagName);
@@ -862,17 +977,16 @@ function renderHoverUI(target) {
             [O]utlines | [I]nfo | ${shieldText} | [H]ighlight | [K]ey Tips
         </div>
         <div style="font-size: 10px; opacity: 0.8; text-align: center; color: var(--tester-tag); font-weight: bold; margin-top: 4px;">
-            Shift+Click to [L]ock | Alt+Click to [M]ark
+            Shift+Alt+Click to [L]ock | Alt+Click to [M]ark
         </div>
         <div style="font-size: 10px; opacity: 0.8; text-align: center; margin-top: 4px;">
             [X/Z/,/.] Up/Down/Left/Right | [T]ether | [P]osition | [C]lear
         </div>
         <div style="font-size: 10px; opacity: 0.8; text-align: center; margin-top: 4px;">
-            [W]rite | ${freezeText} | Shift+Scroll to Size
+            [N]otate | ${freezeText} | Shift+Scroll to Size
         </div>
     `
     : ``;
-
   return `
         <div style="font-family: monospace; font-size: 13px; margin-bottom: 4px; word-break: break-all; white-space: normal;">
             ${generateElementHeader(target)}
@@ -928,7 +1042,8 @@ document.addEventListener("mousemove", (e) => {
     shield.style.display = "block";
   }
 
-  if (!isValidTarget(target)) {
+  // Pass e.altKey to instantly turn on the X-Ray tracker when held
+  if (!isValidTarget(target, e.altKey)) {
     cleanUp();
     return;
   }
@@ -978,14 +1093,22 @@ document.addEventListener("mousemove", (e) => {
 });
 
 function updateTooltipPosition(element) {
-  if (!element || (!showTooltip && lockedMenuType !== "picture")) return;
+  if (!element || (!showTooltip && !isLocked)) return;
+
   const rect = element.getBoundingClientRect();
   const tHeight = tooltip.offsetHeight;
   const tWidth = tooltip.offsetWidth;
   let targetX, targetY;
+
+  let actualTether = tetherToElement;
+  // Failsafe: Don't tether to massive structural elements to avoid off-screen pushing
+  if (isLocked && actualTether && rect.height > window.innerHeight * 0.8) {
+    actualTether = false;
+  }
+
   let effAbove = positionAbove;
 
-  if (tetherToElement) {
+  if (actualTether) {
     if (effAbove && rect.top - tHeight - 15 < 0) effAbove = false;
     else if (!effAbove && rect.bottom + tHeight + 15 > window.innerHeight)
       effAbove = true;
@@ -995,7 +1118,7 @@ function updateTooltipPosition(element) {
       effAbove = true;
   }
 
-  if (tetherToElement) {
+  if (actualTether) {
     targetX = rect.left + rect.width / 2;
     targetY = effAbove ? rect.top - tHeight - 10 : rect.bottom + 10;
   } else {
@@ -1014,8 +1137,10 @@ function updateTooltipPosition(element) {
   tooltip.classList.remove("arrow-up", "arrow-down");
   tooltip.classList.add(effAbove ? "arrow-down" : "arrow-up");
 
+  // Pinpoint accurate arrow targeting
   if (dynamicArrow) {
-    let relativeArrowX = lastMouse.x - finalX;
+    let arrowTargetX = actualTether ? rect.left + rect.width / 2 : lastMouse.x;
+    let relativeArrowX = arrowTargetX - finalX;
     relativeArrowX = Math.max(15, Math.min(relativeArrowX, tWidth - 15));
     tooltip.style.setProperty("--arrow-x", relativeArrowX + "px");
   } else {
@@ -1028,6 +1153,9 @@ document.addEventListener(
   (e) => {
     if (!isExtensionValid() || !inspectorActive || isDrawingMode) return;
 
+    lastMouse.x = e.clientX;
+    lastMouse.y = e.clientY;
+
     let target = e.target;
     let fromShield = false;
 
@@ -1037,7 +1165,8 @@ document.addEventListener(
       fromShield = true;
     }
 
-    if (e.altKey && !e.shiftKey && isValidTarget(target)) {
+    // PICTURE MENU: Alt + Click (No Shift)
+    if (e.altKey && !e.shiftKey && isValidTarget(target, true)) {
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
@@ -1053,12 +1182,15 @@ document.addEventListener(
       return;
     }
 
-    if (e.shiftKey && !e.altKey && isValidTarget(target)) {
+    // MAIN MENU: Shift + Alt + Click
+    if (e.shiftKey && e.altKey && isValidTarget(target, true)) {
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
       lockedMenuType = "main";
       lockElement(target);
+      if (fromShield && ignoreHoverStyles) shield.style.display = "block";
+      return;
     }
   },
   true,
@@ -1070,15 +1202,18 @@ function lockElement(targetElement) {
   tooltip.classList.add("locked-mode");
   shield.style.display = "none";
 
-  if (showTooltip || lockedMenuType === "picture") {
-    if (lockedMenuType === "picture") {
-      renderPictureMenu();
-    } else {
-      renderLockedMenu();
-    }
-    tooltip.style.display = "block";
+  // Force the visual highlight on untracked elements when explicitly locked
+  if (showOutline) currentTarget.classList.add("tester-outline-hover");
+  if (showHighlight) currentTarget.classList.add("tester-highlight-hover");
+
+  // The tooltip MUST be visible before we render the menu.
+  // If it is display:none, its width/height are 0px, causing the positioning math to completely fail!
+  tooltip.style.display = "block";
+
+  if (lockedMenuType === "picture") {
+    renderPictureMenu();
   } else {
-    tooltip.style.display = "none";
+    renderLockedMenu();
   }
 }
 
@@ -1086,6 +1221,7 @@ function renderPictureMenu() {
   const hasOutline = currentTarget.classList.contains("tester-pic-outline");
   const hasHighlight = currentTarget.classList.contains("tester-pic-highlight");
   const hasArrow = currentTarget.classList.contains("tester-pic-arrow");
+  const hasCensor = currentTarget.classList.contains("tester-pic-censor");
 
   let html = `
         <button id="closeMenuBtn" class="close-icon-btn">X</button>
@@ -1093,11 +1229,12 @@ function renderPictureMenu() {
             ${generateElementHeader(currentTarget)}
         </div>
         <div style="font-size: 11px; text-align: center; margin-bottom: 6px; font-weight: bold; color: var(--tester-val);">Picture Mode</div>
-        <div class="action-grid">
+        <div class="action-grid" style="grid-template-columns: 1fr 1fr 1fr;">
             <button id="picOutlineBtn" style="background: var(--tester-success); outline: ${hasOutline ? "2px solid white" : "none"}; outline-offset: -2px;">Outline</button>
             <button id="picHighlightBtn" style="background: var(--tester-success); outline: ${hasHighlight ? "2px solid white" : "none"}; outline-offset: -2px;">Highlight</button>
             <button id="picArrowBtn" style="background: var(--tester-success); outline: ${hasArrow ? "2px solid white" : "none"}; outline-offset: -2px;">Arrow</button>
-            <button id="picClearBtn" style="background: var(--tester-danger)">Clear</button>
+            <button id="picCensorBtn" style="background: var(--tester-danger); outline: ${hasCensor ? "2px solid white" : "none"}; outline-offset: -2px; grid-column: span 2;">Censor</button>
+            <button id="picClearBtn" style="background: var(--tester-list-bg);">Clear</button>
         </div>
     `;
 
@@ -1137,7 +1274,7 @@ function renderPictureMenu() {
                                </svg>`;
       document.body.appendChild(arrow);
       pictureArrows.set(currentTarget, arrow);
-      updateAllArrows();
+      updateAllDynamicElements();
     } else {
       let arrow = pictureArrows.get(currentTarget);
       if (arrow) {
@@ -1147,11 +1284,21 @@ function renderPictureMenu() {
     }
   };
 
+  document.getElementById("picCensorBtn").onclick = (e) => {
+    currentTarget.classList.toggle("tester-pic-censor");
+    e.currentTarget.style.outline = currentTarget.classList.contains(
+      "tester-pic-censor",
+    )
+      ? "2px solid white"
+      : "none";
+  };
+
   document.getElementById("picClearBtn").onclick = () => {
     currentTarget.classList.remove(
       "tester-pic-outline",
       "tester-pic-highlight",
       "tester-pic-arrow",
+      "tester-pic-censor",
     );
     let arrow = pictureArrows.get(currentTarget);
     if (arrow) {
@@ -1172,8 +1319,12 @@ function renderLockedMenu(returnHtmlString = false) {
         <button id="showLocatorsBtn" class="btn-success" style="background: var(--tester-locator)">Locators</button>
     </div>`
     : `<button id="copyElPropsBtn" class="action-row" style="background: var(--tester-success)">HTML+CSS</button>`;
+
   let fillBtnHTML = isInput
-    ? `<button id="fillMax" class="action-row" style="background: var(--tester-success)">Fill Max + Overflow</button>`
+    ? `<div class="action-grid" style="margin-top: 6px;">
+           <button id="fillMaxExact" class="btn-success" style="background: var(--tester-success); margin:0;" title="Fill exactly to max length">Fill Max</button>
+           <button id="fillMaxOver" class="btn-success" style="background: var(--tester-danger); margin:0;" title="Fill max length + 10 chars">Fill + Overflow</button>
+       </div>`
     : "";
 
   let html = `
@@ -1222,14 +1373,29 @@ function renderLockedMenu(returnHtmlString = false) {
     );
   };
 
-  if (enableAuto)
+  if (enableAuto) {
     document.getElementById("showLocatorsBtn").onclick = () =>
       renderLocatorMenu();
-  if (isInput)
-    document.getElementById("fillMax").onclick = () => {
-      fillAndOverride(currentTarget, currentTarget.getAttribute("maxlength"));
+  }
+
+  if (isInput) {
+    document.getElementById("fillMaxExact").onclick = () => {
+      fillAndOverride(
+        currentTarget,
+        currentTarget.getAttribute("maxlength"),
+        false,
+      );
       cleanUp();
     };
+    document.getElementById("fillMaxOver").onclick = () => {
+      fillAndOverride(
+        currentTarget,
+        currentTarget.getAttribute("maxlength"),
+        true,
+      );
+      cleanUp();
+    };
+  }
 }
 
 function renderLocatorMenu() {
@@ -1355,9 +1521,17 @@ function copyToClipboard(text, btn) {
   });
 }
 
-function fillAndOverride(element, length) {
-  element.removeAttribute("maxlength");
-  element.value = "X".repeat((isNaN(length) ? 500 : parseInt(length)) + 10);
+function fillAndOverride(element, length, overflow = true) {
+  let limit = parseInt(length);
+  if (isNaN(limit) || limit <= 0) limit = 100; // Reasonable default
+
+  if (overflow) {
+    element.removeAttribute("maxlength");
+    element.value = "X".repeat(limit + 10);
+  } else {
+    element.value = "X".repeat(limit);
+  }
+
   element.dispatchEvent(new Event("input", { bubbles: true }));
   element.dispatchEvent(new Event("change", { bubbles: true }));
 }

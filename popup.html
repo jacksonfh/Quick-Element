@@ -38,7 +38,7 @@
             <div class = "subhead-Row">Site Default</div>
             <div class="row">
                 <span>Default behavior for new sites:</span>
-                <select id="defaultSiteMode" class="drop">
+                <select id="defaultSiteMode" style="width: 80px;">
                     <option value="enabled">ON</option><option value="disabled">OFF</option>
                 </select>
             </div>
@@ -46,7 +46,7 @@
             <div class= "subhead-Row">Appearance</div>
             <div class="row">
                 <span>Theme:</span>
-                <select id="themeSelect"><option value="dark">Dark</option><option value="light">Light</option></select>
+                <select id="themeSelect" style="width: 80px;"><option value="dark">Dark</option><option value="light">Light</option></select>
             </div>
             <div class="row">
                 <span>Outline Color:</span>
@@ -62,17 +62,13 @@
                     <span class="definitiontext">alt+[o]</span>
                 </div>
             </div>
-            
             <div class="row">
                 <span>Highlight Color:</span>
                 <div style="display: flex; align-items: center; gap: 4px;">
                     <input type="range" id="HighlightOpacity" min="0" max="1" step="0.05" value="0.5" style="width: 45px;" title="Opacity">
-                    <span class="definitiontext">Opacity</span>
                     <input type="color" id="HighlightColor" value="#ffee00">
-                    <span class="definitiontext">Color</span>
                 </div>
             </div>
-
             <div class="row">
                 <span>Show Element Highlight:</span>
                 <div class = "definition">
@@ -82,6 +78,14 @@
                     </label>
                     <span class="definitiontext">alt+[h]</span>
                 </div>
+            </div>
+            <div class="row">
+                <span>Censor Style:</span>
+                <select id="censorModeSelect" style="width: 90px;">
+                    <option value="blur">Blur</option>
+                    <option value="blackout">Blackout</option>
+                    <option value="blend">Blend In</option>
+                </select>
             </div>
             <div class="row">
                 <span>Show Info Box:</span>
@@ -107,7 +111,7 @@
             <div class="subhead-Row">Performance & UI</div>
             <div class="row">
                 <span>Hover Delay (ms):</span>
-                <input type="number" id="hoverDelayInput" value="20" min="0" max="500" style="width: 60px; text-align: center;">
+                <input type="number" id="hoverDelayInput" value="20" min="0" max="500" style="width: 60px; text-align: center; height: 26px; border-radius: 3px; border: 1px solid var(--tester-border); background: var(--tester-input-bg); color: var(--tester-text);">
             </div>
             <div class="row">
                 <span title = "Lets the arrow move with the mouse (can be more cpu intensive)">Dynamic Tracking Arrow:</span>
@@ -141,14 +145,14 @@
     <h3 style="margin-top: 15px; margin-bottom: 5px;">Automation Tools</h3>
     <label style="margin-bottom: 10px; display: flex;"><input type="checkbox" id="autoToggle"> Enable Smart Locators</label>
     <div id="autoPanel" class="sub-panel" style="display:none;">
-        <select id="frameworkSelect" style="width: 100%; margin-bottom: 4px;">
+        <select id="frameworkSelect" style="width: 100%; margin-bottom: 8px;">
             <option value="playwright">Playwright</option>
             <option value="cypress">Cypress</option>
             <option value="selenium">Selenium</option>
             <option value="wdio">WebDriverIO</option>
             <option value="robot">Robot Framework</option>
         </select>
-        <select id="languageSelect" style="width: 100%; margin-bottom: 4px;">
+        <select id="languageSelect" style="width: 100%; margin-bottom: 8px;">
             <option value="js">JS / TS</option>
             <option value="python">Python</option>
             <option value="java">Java</option>
@@ -159,6 +163,31 @@
         </select>
     </div>
 
+    <h3 style="margin-top: 15px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: baseline;">
+        <span>Profiles <span id="profileSaveIndicator" style="font-size: 10px; color: var(--tester-success); opacity: 0; transition: opacity 0.3s; margin-left: 4px;">Saved! ✓</span></span>
+        <span style="font-size: 9px; color: var(--tester-tag); font-weight: normal;">(Alt+Scroll cycle)</span>
+    </h3>
+    
+    <div class="entry-row">
+        <select id="profileSelect"></select>
+        <div style="display: flex; gap: 4px;">
+            <button id="saveCurrentProfileBtn" class="icon-btn" title="Save Changes to Profile" style="background: var(--tester-success);">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+            </button>
+            <button id="createNewProfileBtn" class="icon-btn" title="Create New Profile" style="background: var(--tester-btn-bg);">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            </button>
+            <button id="deleteProfileBtn" class="icon-btn" title="Delete Profile" style="background: var(--tester-danger);">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            </button>
+        </div>
+    </div>
+    
+    <div class="entry-row" id="newProfileContainer" style="display: none;">
+        <input type="text" id="newProfileName" placeholder="New Profile Name">
+        <button id="confirmNewProfileBtn" class="entry-btn">Create</button>
+    </div>
+    
     <div class="row" style="margin-top: 15px; border-bottom: 1px solid var(--tester-border); padding-bottom: 8px;">
         <strong style="font-size: 13px; color: var(--tester-success);">Track All Elements</strong>
         <label class="switch">
@@ -171,14 +200,20 @@
         Tracked Elements
         <a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element" target="_blank" style="font-size: 10px; color: var(--tester-class); text-decoration: none;">MDN Ref ↗</a>
     </h3>
-    <div class="entry-row"><input type="text" id="tagInput" placeholder="INPUT"><button id="addTagBtn" class="entry-btn">Add</button></div>
+    <div class="entry-row">
+        <input type="text" id="tagInput" placeholder="INPUT">
+        <button id="addTagBtn" class="entry-btn">Add</button>
+    </div>
     <ul id="tagList"></ul>
 
     <h3 style="display: flex; justify-content: space-between; align-items: baseline; border: none;">
         Tracked Properties
         <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/Reference" target="_blank" style="font-size: 10px; color: var(--tester-class); text-decoration: none;">MDN Ref ↗</a>
     </h3>
-    <div class="entry-row"><input type="text" id="cssInput" placeholder="z-index"><button id="addCssBtn" class="entry-btn">Add</button></div>
+    <div class="entry-row">
+        <input type="text" id="cssInput" placeholder="z-index">
+        <button id="addCssBtn" class="entry-btn">Add</button>
+    </div>
     <ul id="cssList"></ul>
     <div id="version_number" class="small-line" style="text-align: center;"></div>
     <script src="popup.js"></script>

@@ -40,7 +40,6 @@
     --tester-input-bg: #ffffff;
 }
 
-
 .bbh-bogle-regular {
     font-family: "BBH Bogle", sans-serif;
     font-weight: 400;
@@ -53,94 +52,64 @@
     font-style: normal;
 }
 
-.quickElement-Head {
+.tester-popup .quickElement-Head {
     font-family: "BBH Bartle", sans-serif;
     font-weight: 200;
     text-align: center;
 }
 
-.entry-row {
-    height: 27;
-    margin-bottom: 5px;
-}
-
-.entry-btn {
-    margin-left: 15px;
-}
-
-/* Normal Hover States */
-.tester-outline-hover {
-    outline: 2px solid var(--tester-user-outline, #ff80ff) !important;
-}
-
-.tester-highlight-hover {
-    background-color: var(--tester-user-highlight, #ffee0093) !important;
-}
-
-/* Picture Mode Sticky States */
-.tester-pic-outline {
-    outline: 3px dashed var(--tester-user-outline, #ff80ff) !important;
-    outline-offset: 2px !important;
-}
-
-.tester-pic-highlight {
-    background-color: var(--tester-user-highlight, #ffee0093) !important;
-}
-
-
-/* --- PICTURE MODE ARROWS --- */
-.tester-drawn-arrow {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 45px;
-    height: 45px;
-    z-index: 2147483646;
-    /* Just under the tooltip */
-    pointer-events: none;
-    /* Allows clicks to pass through to the page */
-}
-
-.small-line {
+/* SCOPED POPUP LAYOUT CLASSES */
+.tester-popup .small-line {
     font-size: 10px;
     opacity: 0.7;
     vertical-align: center;
     align-items: top;
 }
 
-.subhead-Row {
+.tester-popup .subhead-Row {
     font-size: 10px;
     text-transform: uppercase;
     opacity: 0.7;
     margin-top: 10px;
     margin-bottom: 6px;
     font-weight: bold;
-
 }
 
-.row {
-    padding-left: 5px;
-    height: 27;
-
+.tester-popup .row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+    min-height: 26px;
 }
 
-.divider {
+.tester-popup .entry-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.tester-popup .entry-btn {
+    height: 26px;
+    margin-left: 0;
+    padding: 0 12px;
+}
+
+.tester-popup .divider {
     opacity: 0.3;
 }
 
-
-/*MARK: Definitions
-*/
-.definition {
+/* SCOPED POPUP DEFINITIONS */
+.tester-popup .definition {
     position: relative;
     display: inline-block;
     cursor: pointer;
 }
 
-/* Definition text */
-.definitiontext {
+.tester-popup .definitiontext {
     visibility: hidden;
-    /* Hidden by default */
     background-color: darkslategray;
     color: #ffffff;
     text-align: center;
@@ -153,25 +122,51 @@
     font-size: 10px;
 }
 
-/* Show the definition text on hover */
-.definition:hover .definitiontext {
+.tester-popup .definition:hover .definitiontext {
     visibility: visible;
 }
 
-.definitiontext::after {
+.tester-popup .definitiontext::after {
     content: " ";
     position: absolute;
     top: 50%;
     left: 100%;
-    /* To the right of the definition */
     margin-top: -5px;
     border-width: 5px;
     border-style: solid;
     border-color: transparent transparent transparent darkslategray;
 }
 
-/* MARK: Tooltip Style
-*/
+/* Normal Hover States (Unique enough to remain global) */
+.tester-outline-hover {
+    outline: 2px solid var(--tester-user-outline, #ff80ff) !important;
+}
+
+.tester-highlight-hover {
+    background-color: var(--tester-user-highlight, #ffee0093) !important;
+}
+
+.tester-pic-outline {
+    outline: 3px dashed var(--tester-user-outline, #ff80ff) !important;
+    outline-offset: 2px !important;
+}
+
+.tester-pic-highlight {
+    background-color: var(--tester-user-highlight, #ffee0093) !important;
+}
+
+/* PICTURE MODE ARROWS */
+.tester-drawn-arrow {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 45px;
+    height: 45px;
+    z-index: 2147483646;
+    pointer-events: none;
+}
+
+/* --- SCOPED TOOLTIP STYLES --- */
 #tester-tooltip {
     position: fixed;
     padding: 12px 14px;
@@ -274,27 +269,27 @@
     background: var(--tester-danger-hover);
 }
 
-.action-grid {
+#tester-tooltip .action-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 6px;
     margin-top: 8px;
 }
 
-.action-row {
+#tester-tooltip .action-row {
     margin-top: 8px;
     gap: 6px;
     background: var(--tester-success);
 }
 
-action .locator-list {
+#tester-tooltip .locator-list {
     display: flex;
     flex-direction: column;
     gap: 4px;
     margin-top: 8px;
 }
 
-.locator-list button {
+#tester-tooltip .locator-list button {
     margin: 0;
     font-family: monospace;
     font-size: 10px;
@@ -305,8 +300,18 @@ action .locator-list {
     color: var(--tester-text);
 }
 
-.locator-list button:hover {
+#tester-tooltip .locator-list button:hover {
     background: var(--tester-btn-bg);
+}
+
+#tester-tooltip .color-swatch {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border: 1px solid var(--tester-border);
+    border-radius: 2px;
+    margin-right: 4px;
+    vertical-align: middle;
 }
 
 #tester-tooltip::after {
@@ -331,7 +336,7 @@ action .locator-list {
     border-color: transparent transparent var(--tester-bg-alpha) transparent;
 }
 
-/* --- POPUP SPECIFIC STYLES --- */
+/* --- SCOPED POPUP SPECIFIC STYLES --- */
 body.tester-popup {
     width: 260px;
     font-family: sans-serif;
@@ -350,35 +355,31 @@ body.tester-popup {
     margin-bottom: 10px;
 }
 
-.tester-popup .row {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 10px;
-    align-items: center;
-}
-
-.drop {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.tester-popup input[type="text"] {
-    width: 65%;
-    padding: 4px;
+/* STANDARDIZED INPUTS & SELECTS */
+.tester-popup input[type="text"],
+.tester-popup select {
+    box-sizing: border-box;
+    height: 26px;
+    padding: 4px 6px;
     border-radius: 3px;
     border: 1px solid var(--tester-border);
     background: var(--tester-input-bg);
     color: var(--tester-text);
 }
 
-.tester-popup select,
+.tester-popup .entry-row input[type="text"],
+.tester-popup .entry-row select {
+    flex-grow: 1;
+    width: auto;
+}
+
 .tester-popup input[type="color"] {
-    padding: 2px;
+    height: 26px;
+    width: 32px;
+    padding: 1px 2px;
     border-radius: 3px;
     border: 1px solid var(--tester-border);
     background: var(--tester-input-bg);
-    color: var(--tester-text);
     cursor: pointer;
 }
 
@@ -386,7 +387,6 @@ body.tester-popup {
     background: var(--tester-btn-bg);
     color: white;
     border: none;
-    padding: 4px 8px;
     border-radius: 3px;
     cursor: pointer;
     font-size: 12px;
@@ -394,6 +394,16 @@ body.tester-popup {
 
 .tester-popup button:hover {
     background: var(--tester-btn-hover);
+}
+
+/* PERFECTLY CENTERED ICON BUTTONS */
+.tester-popup .icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
 }
 
 .tester-popup .remove-btn {
@@ -473,10 +483,8 @@ body.tester-popup {
     background: var(--tester-class);
 }
 
-
-/* MARK: UI TOGGLES
- */
-.switch {
+/* SCOPED UI TOGGLES */
+.tester-popup .switch {
     position: relative;
     display: inline-block;
     width: 34px;
@@ -484,13 +492,13 @@ body.tester-popup {
     flex-shrink: 0;
 }
 
-.switch input {
+.tester-popup .switch input {
     opacity: 0;
     width: 0;
     height: 0;
 }
 
-.slider {
+.tester-popup .slider {
     position: absolute;
     cursor: pointer;
     top: 0;
@@ -502,7 +510,7 @@ body.tester-popup {
     border-radius: 20px;
 }
 
-.slider:before {
+.tester-popup .slider:before {
     position: absolute;
     content: "";
     height: 14px;
@@ -514,15 +522,15 @@ body.tester-popup {
     border-radius: 50%;
 }
 
-input:checked+.slider {
+.tester-popup input:checked+.slider {
     background-color: var(--tester-success);
 }
 
-input:checked+.slider:before {
+.tester-popup input:checked+.slider:before {
     transform: translateX(14px);
 }
 
-.header-panel {
+.tester-popup .header-panel {
     background: var(--tester-list-bg);
     padding: 10px;
     border-radius: 6px;
@@ -530,19 +538,27 @@ input:checked+.slider:before {
     text-align: center;
 }
 
-/* Dims the site row when master is off */
-.dimmed {
+.tester-popup .dimmed {
     opacity: 0.4;
     transition: opacity 0.2s ease-in-out;
 }
 
-/* Color Swatch for CSS Properties */
-.color-swatch {
-    display: inline-block;
-    width: 10px;
-    height: 10px;
-    border: 1px solid var(--tester-border);
-    border-radius: 2px;
-    margin-right: 4px;
-    vertical-align: middle;
+/* CENSOR MODES (Unique enough to remain global) */
+html[data-tester-censor-mode="blur"] .tester-pic-censor {
+    filter: blur(6px) !important;
+    user-select: none !important;
+}
+
+html[data-tester-censor-mode="blackout"] .tester-pic-censor,
+html[data-tester-censor-mode="blackout"] .tester-pic-censor * {
+    background-color: #111111 !important;
+    color: #111111 !important;
+    border-color: #111111 !important;
+    text-shadow: none !important;
+    border-radius: 4px !important;
+    user-select: none !important;
+}
+
+html[data-tester-censor-mode="blend"] .tester-pic-censor {
+    visibility: hidden !important;
 }
