@@ -446,7 +446,7 @@ document.addEventListener(
 
 document.addEventListener("keydown", (e) => {
   if (!isExtensionValid() || !inspectorActive) return;
-  const key = e.key.toLowerCase();
+  const key = e.key;
   const isInput =
     e.target &&
     (e.target.tagName === "INPUT" ||

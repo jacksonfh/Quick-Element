@@ -543,7 +543,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   document.addEventListener("keydown", (e) => {
-    const key = e.key.toLowerCase();
+    const key = e.key;
     if (e.altKey) {
       if (key === "o") {
         e.preventDefault();
