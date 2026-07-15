@@ -461,7 +461,7 @@ document.addEventListener("keydown", (e) => {
     drawCanvas.style.height = inkFrozen ? "100vh" : "100%";
 
     showToast(
-      inkFrozen ? "Ink Frozen" : "Ink Anchored",
+      inkFrozen ? "Ink Frozen" : "Ink Sticky",
       inkFrozen
         ? "var(--tester-danger, #ff4757)"
         : "var(--tester-success, #2ed573)",
@@ -983,7 +983,7 @@ function renderHoverUI(target) {
             [X/Z/,/.] Up/Down/Left/Right | [T]ether | [P]osition | [C]lear
         </div>
         <div style="font-size: 10px; opacity: 0.8; text-align: center; margin-top: 4px;">
-            [N]otate | ${freezeText} | Shift+Scroll to Size
+            [N]ote Mode | ${freezeText} | Shift+Scroll Pen Size
         </div>
     `
     : ``;

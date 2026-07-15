@@ -206,7 +206,7 @@
     </div>
     <ul id="tagList"></ul>
 
-    <h3 style="display: flex; justify-content: space-between; align-items: baseline; border: none;">
+    <h3 style="display: flex; justify-content: space-between; align-items: baseline; border: none; border-top: 1px solid var(--tester-border); padding-top: 10px;">
         Tracked Properties
         <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/Reference" target="_blank" style="font-size: 10px; color: var(--tester-class); text-decoration: none;">MDN Ref ↗</a>
     </h3>
@@ -215,7 +215,10 @@
         <button id="addCssBtn" class="entry-btn">Add</button>
     </div>
     <ul id="cssList"></ul>
-    <div id="version_number" class="small-line" style="text-align: center;"></div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding-top: 8px; border-top: 1px solid var(--tester-border);">
+    <a href="help.html" target="_blank" style="font-size: 11px; color: var(--tester-class); text-decoration: none; font-weight: bold;">Help / How-To ↗</a>
+    <div id="version_number" class="small-line" style="margin: 0; font-family: monospace; color: var(--tester-tag);"></div>
+    </div>
     <script src="popup.js"></script>
 </body>
 </html>

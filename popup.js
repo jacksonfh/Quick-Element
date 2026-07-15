@@ -175,7 +175,7 @@ document.addEventListener("DOMContentLoaded", () => {
       showTooltipToggle.checked = result.showTooltip !== false;
       showHotkeyToggle.checked = result.showHotkeys !== false;
       hoverDelayInput.value =
-        result.hoverDelay !== undefined ? result.hoverDelay : 20;
+        result.hoverDelay !== undefined ? result.hoverDelay : 5;
       dynamicArrowToggle.checked = result.dynamicArrow !== false;
       ignoreHoverToggle.checked = result.ignoreHoverStyles || false;
 
@@ -269,7 +269,7 @@ document.addEventListener("DOMContentLoaded", () => {
     updateProfileDropdown();
     renderList(p.css, cssList, "customCSS");
     renderList(p.tags, tagList, "trackedTags");
-    trackAllToggle.checked = p.trackAllElements || false;
+    trackAllToggle.checked = p.trackAllElements || true;
   });
 
   // NEW: Flash visual indicator

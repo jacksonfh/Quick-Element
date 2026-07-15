@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Element - Help & How-To</title>
+    <style>
+        :root {
+            --bg: #2f3542;
+            --text: #f1f2f6;
+            --border: #57606f;
+            --tag: #ff9f43;
+            --class: #54a0ff;
+            --success: #2ed573;
+            --danger: #ff4757;
+            --list-bg: #1e242e;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            margin: 0;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #272c36;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            border: 1px solid var(--border);
+        }
+
+        h1 { color: var(--class); border-bottom: 2px solid var(--border); padding-bottom: 10px; margin-top: 0; }
+        h2 { color: var(--tag); margin-top: 30px; border-bottom: 1px solid var(--border); padding-bottom: 5px; }
+        h3 { color: var(--text); margin-top: 25px; }
+        
+        p, li { font-size: 15px; }
+        ul { padding-left: 20px; }
+        li { margin-bottom: 8px; }
+
+        code {
+            background-color: var(--list-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: var(--success);
+            border: 1px solid var(--border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            margin-bottom: 30px;
+            background-color: var(--list-bg);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th { background-color: rgba(255,255,255,0.05); color: var(--class); font-weight: bold; }
+        tr:last-child td { border-bottom: none; }
+        td:first-child { font-family: monospace; color: var(--success); font-weight: bold; width: 40%; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Quick Element: User Guide</h1>
+    <p>Welcome to <strong>Quick Element</strong>, the ultimate Swiss Army Knife for QA testing, frontend debugging, and screen recording. Quick Element lets you strip away the noise of standard DevTools and puts the exact data and markup tools you need right at your cursor.</p>
+
+    <h2>1. The Basics: Hover vs. Lock</h2>
+    <p>Quick Element operates in two primary states: <strong>Hover</strong> and <strong>Lock</strong>.</p>
+    <ul>
+        <li><strong>Hover Mode:</strong> Move your mouse around the page. If the element matches your active "Tracked Elements" list, a tooltip will appear showing its HTML, CSS, and Accessibility data.</li>
+        <li><strong>Lock Mode (<code>Shift + Alt + Click</code>):</strong> Locks the tooltip to a specific element. This freezes the data and opens the Main Menu, giving you access to Automation Locators, Copy CSS buttons, and Quick Testing tools.</li>
+    </ul>
+
+    <h2>2. Element Profiles</h2>
+    <p>You don't need to track every element all the time. Use <strong>Profiles</strong> to save specific configurations of Elements (<code>INPUT</code>, <code>DIV</code>) and CSS properties (<code>z-index</code>, <code>color</code>).</p>
+    <ul>
+        <li><strong>Cycling Profiles:</strong> Outside of drawing mode, hold <code>Alt</code> and <strong>Scroll your mouse wheel</strong> to cycle through your saved profiles instantly.</li>
+        <li><strong>X-Ray Vision:</strong> Need to inspect an element not in your current profile? Hold <code>Alt</code> while moving your mouse. The extension will temporarily track <em>everything</em> on the screen until you let go.</li>
+    </ul>
+
+    <h2>3. Picture Mode (Visual Bug Reports)</h2>
+    <p>Need to point out a bug or highlight a specific metric? <strong><code>Alt + Click</code></strong> any element on the page to open the <strong>Picture Menu</strong>.</p>
+    <ul>
+        <li><strong>Outline:</strong> A high-visibility dashed border.</li>
+        <li><strong>Highlight:</strong> A translucent background highlight.</li>
+        <li><strong>Arrow:</strong> A perfectly centered tracking arrow pointing at the element.</li>
+        <li><strong>Censor:</strong> Obfuscate sensitive data. Change the Censor Style (Blur, Blackout, Blend In) from the extension popup.</li>
+    </ul>
+
+    <h2>4. Note Mode (Screen Recording Whiteboard)</h2>
+    <p>Turn any webpage into a live presentation whiteboard. Press <strong><code>Alt + N</code></strong> to toggle Note Mode on and off.</p>
+    <ul>
+        <li><strong>Draw:</strong> Left-Click and drag to draw with your Pen. Right-Click and drag to use your Highlighter.</li>
+        <li><strong>Erase:</strong> Middle-Click (or Shift + Left-Click) and swipe over a line to delete the entire stroke.</li>
+        <li><strong>Resize Brush:</strong> Hold <code>Shift</code> and <strong>Scroll your mouse wheel</strong> to adjust your brush size dynamically.</li>
+        <li><strong>Dynamic Anchoring:</strong> Your drawings intelligently "stick" to the scrolling container you drew them on, meaning your ink moves naturally as you scroll down the page.</li>
+        <li><strong>Ink Freeze (<code>Alt + F</code>):</strong> Detach your ink from the webpage and glue it to your monitor glass. Perfect for censoring an account name so it stays hidden no matter where you scroll.</li>
+    </ul>
+
+    <h2>5. Automation & Testing Tools</h2>
+    <p>When you lock an element (<code>Shift + Alt + Click</code>), you gain access to powerful QA tools:</p>
+    <ul>
+        <li><strong>Smart Locators:</strong> Generate perfect XPath and CSS locators for Playwright, Cypress, Selenium, WebDriverIO, or Robot Framework.</li>
+        <li><strong>Fill Max / Overflow:</strong> If the locked element is a text input, instantly fill it with dummy text perfectly matching its <code>max-length</code> attribute, or overflow it by +10 characters to test error handling.</li>
+    </ul>
+
+    <h2>Master Keyboard Shortcuts</h2>
+    <p><em>Note: All hotkeys require holding the <code>Alt</code> (Windows) or <code>Option</code> (Mac) key.</em></p>
+
+    <h3>Core Navigation</h3>
+    <table>
+        <tr><th>Shortcut</th><th>Action</th></tr>
+        <tr><td>Shift + Alt + Click</td><td>Lock Element & Open Main Menu</td></tr>
+        <tr><td>Alt + Click</td><td>Lock Element & Open Picture Menu</td></tr>
+        <tr><td>Alt + Scroll</td><td>Cycle through Element Profiles</td></tr>
+        <tr><td>Alt + Z / X / , / .</td><td>Traverse DOM (Up, Down, Left, Right)</td></tr>
+    </table>
+
+    <h3>Tool Toggles</h3>
+    <table>
+        <tr><th>Shortcut</th><th>Action</th></tr>
+        <tr><td>Alt + I</td><td>Toggle Info Box (Hover Tooltip) Visibility</td></tr>
+        <tr><td>Alt + O</td><td>Toggle Outline Visibility</td></tr>
+        <tr><td>Alt + H</td><td>Toggle Highlight Visibility</td></tr>
+        <tr><td>Alt + S</td><td>Toggle CSS Shield (Ignore Hover Styles)</td></tr>
+        <tr><td>Alt + K</td><td>Toggle Hotkey Guide</td></tr>
+    </table>
+
+    <h3>Annotation & Drawing</h3>
+    <table>
+        <tr><th>Shortcut</th><th>Action</th></tr>
+        <tr><td>Alt + N</td><td>Toggle Note Mode (Whiteboard)</td></tr>
+        <tr><td>Alt + F</td><td>Toggle Ink Freeze (Lock to Screen vs. Page)</td></tr>
+        <tr><td>Alt + C</td><td>Clear entire canvas (Erases ink, arrows, and censors)</td></tr>
+        <tr><td>Shift + Scroll</td><td>Resize Brush (Only while in Note Mode)</td></tr>
+    </table>
+</div>
+
+</body>
+</html>
