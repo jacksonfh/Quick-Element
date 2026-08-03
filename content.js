@@ -154,6 +154,7 @@ function loadConfig() {
       "censorMode",
       "profiles",
       "activeProfile",
+      "showAttributes",
     ],
     (result) => {
       const defaultProfiles = {
@@ -710,6 +711,13 @@ document.addEventListener("keydown", (e) => {
     return;
   }
 
+  if (!isLocked && e.altKey && key === "m") {
+    e.preventDefault();
+    lockedMenuType = "picture";
+    lockElement(currentTarget);
+    return;
+  }
+
   if (e.altKey && key === "t") {
     tetherToElement = !tetherToElement;
     showToast(tetherToElement ? "Tether: Element" : "Tether: Mouse");
@@ -946,12 +954,12 @@ function generateElementHeader(el) {
 
 function generateCSSBlock(el) {
   const cssData = safelyGetCSSData(el, false);
-  return cssData
+  return `<div class="section-title">CSS Properties</div>${cssData
     .map(
       (item) =>
         `${item.prop}: <span class="val">${injectColorSwatches(item.val)}</span>`,
     )
-    .join("<br>");
+    .join("<br>")}`;
 }
 
 function generateRawCopyText() {

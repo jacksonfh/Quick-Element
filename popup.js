@@ -76,6 +76,7 @@ document.addEventListener("DOMContentLoaded", () => {
       "censorMode",
       "profiles",
       "activeProfile",
+      "showAttributes",
     ],
     (result) => {
       const defaultProfiles = {
