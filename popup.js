@@ -31,6 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const newProfileName = document.getElementById("newProfileName");
   const confirmNewProfileBtn = document.getElementById("confirmNewProfileBtn");
   const deleteProfileBtn = document.getElementById("deleteProfileBtn");
+  const showAttributesToggle = document.getElementById("showAttributesToggle");
 
   let currentHost = "";
   let currentMode = "enabled";
@@ -250,6 +251,7 @@ document.addEventListener("DOMContentLoaded", () => {
         updateProfileDropdown();
         newProfileName.value = "";
         newProfileContainer.style.display = "none";
+        showAttributesToggle.checked = result.showAttributes !== false;
       },
     );
   });
@@ -379,6 +381,12 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("cssInput").addEventListener("keydown", (e) => {
     if (e.key === "Enter") document.getElementById("addCssBtn").click();
   });
+
+  showAttributesToggle.addEventListener("change", (e) =>
+    chrome.storage.local.set({
+      showAttributes: e.target.checked,
+    }),
+  );
 
   a11yToggle.addEventListener("change", (e) => {
     a11yPanel.style.display = e.target.checked ? "block" : "none";
@@ -564,6 +572,10 @@ document.addEventListener("DOMContentLoaded", () => {
       if (key === "k") {
         e.preventDefault();
         showHotkeyToggle.click();
+      }
+      if (key === "a") {
+        e.preventDefault();
+        showAttributesToggle.click();
       }
     }
   });

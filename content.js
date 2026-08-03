@@ -25,6 +25,7 @@ let showHighlight = true;
 let showOutline = true;
 let showTooltip = true;
 let showHotkeys = true;
+let showAttributes = true;
 
 let lastRefreshTime = 0;
 let pictureArrows = new Map();
@@ -227,6 +228,7 @@ function loadConfig() {
       showHighlight = result.showHighlight !== false;
       showTooltip = result.showTooltip !== false;
       showHotkeys = result.showHotkeys !== false;
+      showAttributes = result.showAttributes !== false;
 
       tooltip.className = `theme-${result.theme || "dark"}`;
 
@@ -474,6 +476,21 @@ document.addEventListener("keydown", (e) => {
       !isLocked
     ) {
       tooltip.innerHTML = renderHoverUI(currentTarget);
+    }
+    return;
+  }
+
+  if (e.altKey && key === "a") {
+    e.preventDefault();
+    showAttributes = !showAttributes;
+    chrome.storage.local.set({ showAttributes: showAttributes });
+    showToast(showAttributes ? "Attributes: ON" : "Attributes: OFF");
+
+    if ((showTooltip || isLocked) && currentTarget && !isDrawingMode) {
+      tooltip.innerHTML = isLocked
+        ? renderLockedMenu(true)
+        : renderHoverUI(currentTarget);
+      updateTooltipPosition(currentTarget);
     }
     return;
   }
@@ -899,6 +916,23 @@ function safelyGetCSSData(el, returnAll = false) {
   return results;
 }
 
+function generateAttributesBlock(el) {
+  if (!showAttributes || !el.attributes || el.attributes.length === 0)
+    return "";
+
+  let attrsHtml = "";
+  for (let i = 0; i < el.attributes.length; i++) {
+    const attr = el.attributes[i];
+    if (attr.name === "class" || attr.name === "style") continue;
+
+    const safeVal = attr.value.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    attrsHtml += `${attr.name}="<span class="val">${safeVal}</span>"<br>`;
+  }
+
+  if (!attrsHtml) return "";
+  return `<div class="section-title">HTML Attributes</div>${attrsHtml}`;
+}
+
 function generateElementHeader(el) {
   const tag = el.tagName.toLowerCase();
   let classStr = el.getAttribute("class") || "";
@@ -974,13 +1008,13 @@ function renderHoverUI(target) {
         </div>
         <hr>
         <div style="font-size: 10px; opacity: 0.8; text-align: center; margin-top: 4px;">
-            [O]utlines | [I]nfo | ${shieldText} | [H]ighlight | [K]ey Tips
+            [O]utlines | [I]nfo | [A]ttributes | ${shieldText} | [H]ighlight 
         </div>
         <div style="font-size: 10px; opacity: 0.8; text-align: center; color: var(--tester-tag); font-weight: bold; margin-top: 4px;">
-            Shift+Alt+Click to [L]ock | Alt+Click to [M]ark
+            Shift+Alt+Click to [L]ock | Alt+Click to [M]ark | [K]ey Tips
         </div>
         <div style="font-size: 10px; opacity: 0.8; text-align: center; margin-top: 4px;">
-            [X/Z/,/.] Up/Down/Left/Right | [T]ether | [P]osition | [C]lear
+            [X/Z/,/.] Up/Down/Left/Right | [T]ether | [P]osition | [C]lear 
         </div>
         <div style="font-size: 10px; opacity: 0.8; text-align: center; margin-top: 4px;">
             [N]ote Mode | ${freezeText} | Shift+Scroll Pen Size
@@ -993,6 +1027,7 @@ function renderHoverUI(target) {
         </div>
         <hr>
         <div style="text-align:left; font-size:11px; line-height:1.5;">
+            ${generateAttributesBlock(target)}
             ${generateCSSBlock(target)}
             ${generateA11yBlock(target)}
         </div>
@@ -1334,6 +1369,7 @@ function renderLockedMenu(returnHtmlString = false) {
         </div>
         
         <div style="text-align:left; font-size:11px; line-height:1.5; margin-bottom: 8px;">
+            ${generateAttributesBlock(currentTarget)}
             ${generateCSSBlock(currentTarget)}
             ${generateA11yBlock(currentTarget)}
         </div>
